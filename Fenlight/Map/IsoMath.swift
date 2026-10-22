@@ -24,9 +24,18 @@ enum IsoMath {
         return CGPoint(x: front.x, y: front.y - tileHeight / 2)
     }
 
-    /// Draw order for a footprint: things further down the screen draw on top.
+    /// Draw order for a footprint, from the centre of its footprint (`c + r` of the centre point).
+    /// Using the centre, not the front corner, keeps buildings of different sizes in the right order:
+    /// whenever one footprint is fully in front of another along a grid axis and they share a row or
+    /// column, its centre sum is at least 1 larger. Walking residents use the same scale (`depth(at:)`).
     static func zPosition(origin: Tile, size: Int) -> CGFloat {
-        10 + CGFloat(origin.c + origin.r + 2 * (size - 1))
+        10 + CGFloat(origin.c + origin.r + size)
+    }
+
+    /// Draw order for something standing at a scene point (a walking resident's feet), on the same scale
+    /// as `zPosition`: a tile's centre gives the same value as a 1×1 footprint on that tile.
+    static func depth(at p: CGPoint) -> CGFloat {
+        10 + (-p.y) / (tileHeight / 2) + 1
     }
 
     /// The four corners (top, right, bottom, left) of a square block of tiles.

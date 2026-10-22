@@ -29,6 +29,9 @@ enum Economy {
         max(0, cycle - now.timeIntervalSince(start))
     }
 
+    /// With this many seconds or fewer left, a run (or renovation) can be finished for free with a tap.
+    static let freeSkipSeconds: TimeInterval = 30
+
     /// Whole runs finished since `start`, counting at most `cap` seconds (for keepers collecting while you're away).
     static func runsCompleted(since start: Date, cycle: TimeInterval, now: Date, cap: TimeInterval) -> Int {
         guard cycle > 0 else { return 0 }
@@ -54,9 +57,10 @@ enum Economy {
 
     // MARK: Renovation
 
-    /// Wisps to finish a renovation right away: one per 10 minutes left (at least one).
+    /// Wisps to finish a renovation right away: one per 10 minutes left (at least one), and free in
+    /// the last 30 seconds.
     static func finishNowCost(remaining: TimeInterval) -> Double {
-        max(1, (remaining / 600).rounded(.up))
+        remaining <= freeSkipSeconds ? 0 : max(1, (remaining / 600).rounded(.up))
     }
 
     // MARK: Auto-collect

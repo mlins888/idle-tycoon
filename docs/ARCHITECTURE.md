@@ -52,6 +52,10 @@ closed needs no background work. **Keepers** collect every whole run that finish
 (`Economy.runsCompleted`), up to 8 hours while you're away. Worker and decoration bonuses raise the
 payout.
 
+In the **last 30 seconds** of a run, tapping the shop finishes it early for free and collects
+(`Game.skipAndCollect`); its progress bar pulses to show it's tappable. Renovations are also free to
+finish in their last 30 seconds.
+
 ### One of each business
 
 A town can have one of each kind of shop, plus a second once the first reaches its final stage
@@ -141,7 +145,9 @@ gates progress. Up to three are active at once; finishing one can unlock the nex
 The map is a 24 × 24 grid of square tiles, drawn as 2:1 diamonds. A `Tile` has `c` (column, runs
 down-right on screen) and `r` (row, runs down-left). Land is grouped into 4 × 4 **chunks**; a chunk is
 the block of murk you cleanse all at once. `IsoMath` converts between tiles and screen points, and
-decides draw order so buildings lower on the screen draw in front.
+decides draw order from the **centre** of each footprint (`c + r` of its middle), so buildings of
+different sizes and walking residents overlap correctly. (Using the front corner instead breaks when a
+small building sits next to a bigger one.) A test checks every arrangement of 1×1 to 3×3 footprints.
 
 ## File by file
 

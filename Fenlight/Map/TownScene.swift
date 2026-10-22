@@ -178,7 +178,8 @@ final class TownScene: SKScene {
         for b in game.state.buildings {
             guard let node = buildingNodes[b.id] else { continue }
             let produces = game.cycle(b) > 0 && !game.isAuto(b) && !b.isRenovating
-            node.showRun(ready: produces ? game.isReady(b) : nil, payout: game.payout(b), progress: game.runProgress(b))
+            node.showRun(ready: produces ? game.isReady(b) : nil, payout: game.payout(b), progress: game.runProgress(b),
+                         skippable: game.canSkip(b))
             node.showRenovation(remaining: game.renovationRemaining(b))
         }
     }
@@ -305,7 +306,9 @@ final class TownScene: SKScene {
             // Collecting wins over everything; then people; then buildings; then murk.
             let hitBuilding = buildingHit(at: point, tile: tile)
             if let id = hitBuilding, let node = buildingNodes[id] {
-                let amount = game.collect(id)
+                // Ready shops collect; shops in their last 30 seconds finish early and collect.
+                var amount = game.collect(id)
+                if amount < 1 { amount = game.skipAndCollect(id) }
                 if amount >= 1 {
                     ui.clearSelection()
                     floatText("+\(Format.compact(amount))", above: node)

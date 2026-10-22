@@ -116,10 +116,19 @@ struct BuildingPanel: View {
                     } else {
                         ProgressView(value: game.runProgress(building))
                             .tint(Theme.lantern)
-                        Text("Ready in \(Format.duration(game.timeLeft(building)))")
-                            .font(Theme.body(12, weight: .semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(Theme.textDim)
+                        if game.canSkip(building) {
+                            Button {
+                                if game.skipAndCollect(building.id) > 0 { Haptics.collect() }
+                            } label: {
+                                Text("Almost done · finish now for free").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(FenButtonStyle(prominent: true))
+                        } else {
+                            Text("Ready in \(Format.duration(game.timeLeft(building)))")
+                                .font(Theme.body(12, weight: .semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.textDim)
+                        }
                     }
                 }
             }
@@ -394,9 +403,13 @@ private struct RenovationProgress: View {
                 Button {
                     if game.finishRenovationNow(building.id) { Haptics.celebrate() }
                 } label: {
-                    CostLabel(verb: "Finish now", cost: cost, icon: AnyView(WispIcon(size: 14)))
+                    if cost == 0 {
+                        Text("Almost done · finish now for free").frame(maxWidth: .infinity)
+                    } else {
+                        CostLabel(verb: "Finish now", cost: cost, icon: AnyView(WispIcon(size: 14)))
+                    }
                 }
-                .buttonStyle(FenButtonStyle())
+                .buttonStyle(FenButtonStyle(prominent: cost == 0))
                 .disabled(game.state.wisps < cost)
             }
         }

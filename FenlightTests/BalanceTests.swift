@@ -148,3 +148,69 @@ final class RegistryOrderTests: XCTestCase {
         XCTAssertEqual(RegistryGrid.ordered(shipped.residents).count, shipped.residents.count)
     }
 }
+
+@MainActor
+final class SkipTests: XCTestCase {
+    func testTheLastThirtySecondsCanBeSkippedForFree() {
+        let time = TestTime()
+        var state = GameState.newGame(now: time.date)
+        useRoomyTestLayout(&state)
+        state.glimmer = 0
+        let skippy = GameContent(buildings: [testShopDef("reed_candles", cycle: 60, payout: 5)])
+        let game = Game(content: skippy, state: state, clock: time.clock)
+
+        time.advance(29)
+        XCTAssertFalse(game.canSkip(game.building(id: stall)!), "31 seconds left")
+        XCTAssertEqual(game.skipAndCollect(stall), 0)
+        time.advance(1)
+        XCTAssertTrue(game.canSkip(game.building(id: stall)!), "30 seconds left")
+        XCTAssertEqual(game.skipAndCollect(stall), 5)
+        XCTAssertEqual(game.state.glimmer, 5)
+        XCTAssertEqual(game.timeLeft(game.building(id: stall)!), 60, accuracy: 0.001, "the next run starts now")
+    }
+
+    func testRenovationsAreFreeToFinishInTheLastThirtySeconds() {
+        XCTAssertEqual(Economy.finishNowCost(remaining: 30), 0)
+        XCTAssertEqual(Economy.finishNowCost(remaining: 31), 1)
+        XCTAssertEqual(Economy.finishNowCost(remaining: 601), 2)
+    }
+}
+
+final class DrawOrderTests: XCTestCase {
+    /// For every pair of square footprints (sizes 1–3) that don't overlap, if one is fully in front of
+    /// the other along a grid axis while sharing a row or column, it must draw on top.
+    func testFootprintsInFrontAlwaysDrawOnTop() {
+        var checked = 0
+        for sa in 1...3 {
+            for sb in 1...3 {
+                for dc in -4...4 {
+                    for dr in -4...4 {
+                        let a = Tile(c: 10, r: 10), b = Tile(c: 10 + dc, r: 10 + dr)
+                        let aC = a.c...(a.c + sa - 1), aR = a.r...(a.r + sa - 1)
+                        let bC = b.c...(b.c + sb - 1), bR = b.r...(b.r + sb - 1)
+                        guard !(aC.overlaps(bC) && aR.overlaps(bR)) else { continue }
+                        let bInFront = (b.c > aC.upperBound && bR.overlaps(aR)) || (b.r > aR.upperBound && bC.overlaps(aC))
+                        let aInFront = (a.c > bC.upperBound && aR.overlaps(bR)) || (a.r > bR.upperBound && aC.overlaps(bC))
+                        let za = IsoMath.zPosition(origin: a, size: sa), zb = IsoMath.zPosition(origin: b, size: sb)
+                        if bInFront { XCTAssertGreaterThan(zb, za, "\(sb)×\(sb) at \(b) should be in front of \(sa)×\(sa) at \(a)"); checked += 1 }
+                        if aInFront { XCTAssertGreaterThan(za, zb, "\(sa)×\(sa) at \(a) should be in front of \(sb)×\(sb) at \(b)"); checked += 1 }
+                    }
+                }
+            }
+        }
+        XCTAssertGreaterThan(checked, 100)
+    }
+
+    /// The reported bug: a 2×2 placed up and to the right of the starting cottage drew on top of it.
+    func testABuildingBehindTheCottageTucksBehindIt() {
+        let cottage = IsoMath.zPosition(origin: Tile(c: 8, r: 9), size: 1)
+        let behind = IsoMath.zPosition(origin: Tile(c: 8, r: 7), size: 2)
+        XCTAssertLessThan(behind, cottage)
+    }
+
+    /// A resident standing on a tile sorts like a 1×1 building on that tile.
+    func testResidentsShareTheSameScale() {
+        let t = Tile(c: 7, r: 4)
+        XCTAssertEqual(IsoMath.depth(at: IsoMath.center(of: t)), IsoMath.zPosition(origin: t, size: 1), accuracy: 0.0001)
+    }
+}

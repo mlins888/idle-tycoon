@@ -155,7 +155,7 @@ final class ResidentNode: SKNode {
 
     /// Draw in front of things further up the screen and behind things further down.
     func updateDepth() {
-        zPosition = 10.5 + (-position.y) / (IsoMath.tileHeight / 2)
+        zPosition = IsoMath.depth(at: position) + 0.01
     }
 
     func step(dt: TimeInterval, speed: CGFloat) {

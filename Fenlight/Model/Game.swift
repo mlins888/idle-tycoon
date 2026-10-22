@@ -168,6 +168,11 @@ final class Game {
         Economy.timeLeft(since: b.lastCollectedAt, cycle: cycle(b), now: now)
     }
 
+    /// In the last 30 seconds of a run, it can be finished early for free.
+    func canSkip(_ b: PlacedBuilding) -> Bool {
+        !isAuto(b) && !b.isRenovating && cycle(b) > 0 && !isReady(b) && timeLeft(b) <= Economy.freeSkipSeconds
+    }
+
     /// 0...1 through the current run.
     func runProgress(_ b: PlacedBuilding) -> Double {
         let c = cycle(b)
@@ -379,6 +384,14 @@ final class Game {
     }
 
     // MARK: - Actions: shops
+
+    /// Finishes a run that's in its last 30 seconds and collects it, in one go.
+    @discardableResult
+    func skipAndCollect(_ id: Int) -> Double {
+        guard let i = index(of: id), canSkip(state.buildings[i]) else { return 0 }
+        state.buildings[i].lastCollectedAt = now.addingTimeInterval(-cycle(state.buildings[i]))
+        return collect(id)
+    }
 
     @discardableResult
     func collect(_ id: Int) -> Double {

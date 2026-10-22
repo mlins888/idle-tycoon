@@ -87,13 +87,22 @@ final class BuildingNode: SKNode {
 
     /// While a shop is working: a thin progress bar. When its run is done: the glimmer bubble.
     /// Pass nil for buildings that don't produce (or are collected by a keeper).
-    func showRun(ready: Bool?, payout: Double, progress: Double) {
+    func showRun(ready: Bool?, payout: Double, progress: Double, skippable: Bool = false) {
         guard let ready else {
             bubble.isHidden = true
             runBar.isHidden = true
             return
         }
         runBar.isHidden = ready
+        // In the last 30 seconds the bar pulses: one tap finishes it.
+        if skippable, runBar.action(forKey: "pulse") == nil {
+            runFill.fillColor = UIColor(hex: "#FFE08A")
+            runBar.run(.repeatForever(.sequence([.scale(to: 1.2, duration: 0.35), .scale(to: 1, duration: 0.35)])), withKey: "pulse")
+        } else if !skippable, runBar.action(forKey: "pulse") != nil {
+            runBar.removeAction(forKey: "pulse")
+            runBar.setScale(1)
+            runFill.fillColor = UIColor(hex: "#F2B544")
+        }
         if !ready {
             let p = (progress * 50).rounded() / 50
             if p != shownProgress {
