@@ -34,6 +34,8 @@ xcodebuild test -scheme Fenlight -destination 'platform=iOS Simulator,name=iPhon
 | `Fenlight/Persistence`  | Save file.                                                        |
 | `docs/`                 | Plan and art spec.                                                |
 
+How the code works, file by file: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 Adding your own art: see [docs/ART_SPEC.md](docs/ART_SPEC.md).
 
 Debug builds have a wrench button in the top bar for adding glimmer, skipping time and resetting.
