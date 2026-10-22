@@ -31,11 +31,19 @@ enum Residents {
         }?.id
     }
 
-    /// Story residents the town has reached the level for, who haven't moved in yet.
+    /// Residents who are due to move in as soon as there's a bed: story residents the town has reached
+    /// the level for, and festival residents who've been invited.
     static func waitingStory(_ state: GameState, _ content: GameContent, level: Int) -> [ResidentDef] {
         content.residents
-            .filter { $0.arrival == .story && $0.unlockLevel <= level && !lives($0.id, in: state) }
-            .sorted { $0.unlockLevel < $1.unlockLevel }
+            .filter { r in
+                guard !lives(r.id, in: state) else { return false }
+                switch r.arrival {
+                case .story: return r.unlockLevel <= level
+                case .event: return state.invitedResidents.contains(r.id)
+                case .wanderer, .summon: return false
+                }
+            }
+            .sorted { ($0.arrival == .story ? 0 : 1, $0.unlockLevel) < ($1.arrival == .story ? 0 : 1, $1.unlockLevel) }
     }
 
     /// Story residents still locked behind a higher level, soonest first.

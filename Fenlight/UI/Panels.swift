@@ -615,7 +615,12 @@ struct BuildMenu: View {
                     .foregroundStyle(Theme.moss)
             }
             Spacer(minLength: 8)
-            if !unlocked {
+            if def.eventOnly && !game.state.unlockedDecorations.contains(def.id) {
+                Text("Festival")
+                    .font(Theme.body(12, weight: .bold))
+                    .foregroundStyle(Theme.textDim)
+                    .padding(.top, 12)
+            } else if !unlocked {
                 Text("Level \(def.unlockLevel)")
                     .font(Theme.body(12, weight: .bold))
                     .foregroundStyle(Theme.textDim)
@@ -722,6 +727,11 @@ struct DebugMenu: View {
             HStack {
                 Button("+20 wisps") { game.debugAdd(wisps: 20) }
                 Button("Wanderer now") { game.debugWandererNow() }
+            }
+            HStack {
+                Button("Next festival") { game.debugJumpToNextEvent() }
+                Button("+10 tokens") { game.debugAdd(eventTokens: 10) }
+                    .disabled(game.activeEvent == nil)
             }
             HStack {
                 Button("Skip 10m") { game.debugSkip(600) }

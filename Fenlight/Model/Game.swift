@@ -22,9 +22,13 @@ enum Announcement: Identifiable, Equatable {
     case arrival(ResidentDef)
     case transformed(BuildingDef, from: Int, to: Int)
     case questReady(QuestDef)
+    case eventStarted(EventDef)
+    case eventMilestone(EventDef, index: Int)
 
     var id: String {
         switch self {
+        case .eventStarted(let e): return "event-\(e.id)"
+        case .eventMilestone(let e, let i): return "event-\(e.id)-\(i)"
         case .arrival(let r): return "arrival-\(r.id)"
         case .transformed(let def, _, let to): return "transformed-\(def.id)-\(to)"
         case .questReady(let q): return "quest-\(q.id)"
@@ -115,7 +119,7 @@ final class Game {
     }
 
     func isUnlocked(_ def: BuildingDef) -> Bool {
-        level >= def.unlockLevel
+        level >= def.unlockLevel && (!def.eventOnly || state.unlockedDecorations.contains(def.id))
     }
 
     /// Unique buildings (the shrine and the guild) can only be built once.
@@ -304,6 +308,29 @@ final class Game {
             && !Residents.summonPool(content).isEmpty
     }
 
+    // MARK: - Reading: festivals
+
+    /// The festival running right now, if any.
+    var activeEvent: EventDef? {
+        EventCalendar.active(content.events, at: now)?.0
+    }
+
+    /// Time left in the current festival.
+    var eventTimeLeft: TimeInterval? {
+        EventCalendar.active(content.events, at: now).map { $0.1.end.timeIntervalSince(now) }
+    }
+
+    /// Progress in this year's run of a festival (zero if it hasn't been touched this year).
+    func eventProgress(_ e: EventDef) -> EventProgress {
+        guard let w = EventCalendar.window(e, containing: now), let p = state.eventProgress[e.id], p.year == w.year else {
+            return EventProgress(year: EventCalendar.window(e, containing: now)?.year ?? 0)
+        }
+        return p
+    }
+
+    /// Festival tokens for collecting from a shop that's at least this full.
+    static let tokenFullness = 0.25
+
     // MARK: - Reading: quests
 
     /// Quests in progress, in the order they appear in quests.json.
@@ -330,6 +357,7 @@ final class Game {
         guard let i = index(of: id) else { return 0 }
         let amount = pending(state.buildings[i])
         guard amount >= 1 else { return 0 }
+        earnEventToken(for: state.buildings[i])
         state.buildings[i].lastCollectedAt = now
         credit(amount, from: state.buildings[i].defId)
         state.xp += 1
@@ -345,6 +373,7 @@ final class Game {
         for i in state.buildings.indices {
             let amount = pending(state.buildings[i])
             guard amount >= 1 else { continue }
+            earnEventToken(for: state.buildings[i])
             state.buildings[i].lastCollectedAt = t
             credit(amount, from: state.buildings[i].defId)
             total += amount
@@ -527,6 +556,7 @@ final class Game {
         for i in state.buildings.indices where isAuto(state.buildings[i]) {
             settle(i)
         }
+        updateEvent()
         processArrivals()
         startQuests()
         awardLevelWisps()
@@ -556,6 +586,36 @@ final class Game {
         announcements.append(.transformed(def, from: from, to: state.buildings[i].stage))
         layoutRevision += 1
         processArrivals()   // a bigger house may have room for someone now
+    }
+
+    /// During a festival: one token for collecting from a shop that's at least a quarter full.
+    private func earnEventToken(for b: PlacedBuilding) {
+        guard let (e, w) = EventCalendar.active(content.events, at: now) else { return }
+        let cap = capacity(b)
+        guard cap > 0, pending(b) >= cap * Self.tokenFullness else { return }
+        var p = state.eventProgress[e.id].flatMap { $0.year == w.year ? $0 : nil } ?? EventProgress(year: w.year)
+        p.tokens += 1
+        state.eventProgress[e.id] = p
+    }
+
+    /// Starts this year's run of a festival (announcing it once) and hands out milestone rewards.
+    private func updateEvent() {
+        guard let (e, w) = EventCalendar.active(content.events, at: now) else { return }
+        if state.eventProgress[e.id]?.year != w.year {
+            state.eventProgress[e.id] = EventProgress(year: w.year)
+            announcements.append(.eventStarted(e))
+        }
+        guard var p = state.eventProgress[e.id] else { return }
+        while p.reached < e.milestones.count, p.tokens >= e.milestones[p.reached].tokens {
+            let reward = e.milestones[p.reached].reward
+            state.glimmer += reward.glimmer
+            state.wisps += reward.wisps
+            if let deco = reward.decoration { state.unlockedDecorations.insert(deco) }
+            if let resident = reward.resident { state.invitedResidents.insert(resident) }
+            announcements.append(.eventMilestone(e, index: p.reached))
+            p.reached += 1
+        }
+        state.eventProgress[e.id] = p
     }
 
     /// Moves in story residents who are due, then any wanderers whose arrival time has passed.
@@ -705,6 +765,21 @@ final class Game {
     /// Makes the next wanderer arrive right now (if there's a bed and anyone left to come).
     func debugWandererNow() {
         state.nextWandererAt = now
+        tick()
+    }
+
+    func debugAdd(eventTokens: Double) {
+        guard let (e, w) = EventCalendar.active(content.events, at: now) else { return }
+        var p = state.eventProgress[e.id].flatMap { $0.year == w.year ? $0 : nil } ?? EventProgress(year: w.year)
+        p.tokens += eventTokens
+        state.eventProgress[e.id] = p
+        tick()
+    }
+
+    /// Fast-forwards the clock to the start of the next festival.
+    func debugJumpToNextEvent() {
+        guard let (_, w) = EventCalendar.next(content.events, after: now) else { return }
+        clock.offset += w.start.timeIntervalSince(now) + 60
         tick()
     }
 

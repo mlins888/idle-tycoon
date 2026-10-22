@@ -1,0 +1,178 @@
+[
+  {
+    "id": "bloom",
+    "name": "Bloom Festival",
+    "blurb": "The fen remembers how to flower. Every shop is decked in blossom, and folk come from all over to see it.",
+    "start": "03-20",
+    "end": "04-10",
+    "token": "petal",
+    "tokens": "petals",
+    "color": "#E89AB8",
+    "milestones": [
+      {
+        "tokens": 10,
+        "reward": {
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 25,
+        "reward": {
+          "decoration": "blossom_arch"
+        }
+      },
+      {
+        "tokens": 45,
+        "reward": {
+          "glimmer": 3000,
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 70,
+        "reward": {
+          "decoration": "flower_barge"
+        }
+      },
+      {
+        "tokens": 100,
+        "reward": {
+          "resident": "primrose",
+          "wisps": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "midsummer",
+    "name": "Midsummer Fireflies",
+    "blurb": "On the longest days the fireflies return, and the whole town stays up to watch them.",
+    "start": "06-15",
+    "end": "07-05",
+    "token": "firefly",
+    "tokens": "fireflies",
+    "color": "#C8E86A",
+    "milestones": [
+      {
+        "tokens": 10,
+        "reward": {
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 25,
+        "reward": {
+          "decoration": "firefly_tree"
+        }
+      },
+      {
+        "tokens": 45,
+        "reward": {
+          "glimmer": 3000,
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 70,
+        "reward": {
+          "decoration": "sun_dial"
+        }
+      },
+      {
+        "tokens": 100,
+        "reward": {
+          "resident": "lumen",
+          "wisps": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "hollow_moon",
+    "name": "Hollow Moon",
+    "blurb": "When the autumn moon hangs low over the fen, the town carves gourds, lights lanterns and tells stories about the Thief.",
+    "start": "10-15",
+    "end": "11-05",
+    "token": "moon-penny",
+    "tokens": "moon-pennies",
+    "color": "#E8873A",
+    "milestones": [
+      {
+        "tokens": 10,
+        "reward": {
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 25,
+        "reward": {
+          "decoration": "gourd_lanterns"
+        }
+      },
+      {
+        "tokens": 45,
+        "reward": {
+          "glimmer": 3000,
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 70,
+        "reward": {
+          "decoration": "moon_gate"
+        }
+      },
+      {
+        "tokens": 100,
+        "reward": {
+          "resident": "hob",
+          "wisps": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "midwinter",
+    "name": "Midwinter Lights",
+    "blurb": "In the darkest weeks of the year, Fenlight answers with every lantern it has.",
+    "start": "12-15",
+    "end": "01-05",
+    "token": "frost-spark",
+    "tokens": "frost-sparks",
+    "color": "#BDE8F2",
+    "milestones": [
+      {
+        "tokens": 10,
+        "reward": {
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 25,
+        "reward": {
+          "decoration": "midwinter_tree"
+        }
+      },
+      {
+        "tokens": 45,
+        "reward": {
+          "glimmer": 3000,
+          "wisps": 5
+        }
+      },
+      {
+        "tokens": 70,
+        "reward": {
+          "decoration": "ice_lantern"
+        }
+      },
+      {
+        "tokens": 100,
+        "reward": {
+          "resident": "nyx",
+          "wisps": 10
+        }
+      }
+    ]
+  }
+]

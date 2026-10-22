@@ -10,11 +10,16 @@ struct HUDView: View {
     @State private var showBuildMenu = false
     @State private var showResidents = false
     @State private var showQuests = false
+    @State private var showEvent = false
     @State private var showDebug = false
 
     var body: some View {
         VStack(spacing: 0) {
             TopBar(game: game, onDebug: { showDebug = true })
+            if let event = game.activeEvent {
+                EventBanner(game: game, event: event) { showEvent = true }
+                    .padding(.top, 6)
+            }
             Spacer(minLength: 0)
             bottom
         }
@@ -37,6 +42,13 @@ struct HUDView: View {
             QuestLog(game: game)
                 .presentationDetents([.medium, .large])
                 .presentationBackground(Theme.panel)
+        }
+        .sheet(isPresented: $showEvent) {
+            if let event = game.activeEvent {
+                EventView(game: game, event: event)
+                    .presentationDetents([.medium, .large])
+                    .presentationBackground(Theme.panel)
+            }
         }
         .sheet(isPresented: $showDebug) {
             DebugMenu(game: game)

@@ -17,6 +17,13 @@ enum Format {
         return s + units[i]
     }
 
+    /// Whole days for long spans ("12 days"), otherwise hours and minutes.
+    static func days(_ seconds: TimeInterval) -> String {
+        let d = Int(seconds / 86_400)
+        if d >= 2 { return "\(d) days" }
+        return duration(seconds)
+    }
+
     /// 75 → "1m", 8100 → "2h 15m".
     static func duration(_ seconds: TimeInterval) -> String {
         let total = Int(seconds)

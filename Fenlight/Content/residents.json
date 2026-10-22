@@ -418,5 +418,65 @@
       "The stars say... wait for it.",
       "A great light returns to the fen."
     ]
+  },
+  {
+    "id": "primrose",
+    "name": "Primrose",
+    "folk": "Flower sprite",
+    "blurb": "Wakes every spring in a different flower. This year, she picked yours.",
+    "rarity": "rare",
+    "arrival": "event",
+    "unlockLevel": 1,
+    "favoriteShop": "herb_garden",
+    "color": "#E89AB8",
+    "chatter": [
+      "Smell that? Spring!",
+      "Don't step on the crocuses."
+    ]
+  },
+  {
+    "id": "lumen",
+    "name": "Lumen",
+    "folk": "Firefly-fae lamplighter",
+    "blurb": "Glows when happy, which is always. Very useful after dark.",
+    "rarity": "rare",
+    "arrival": "event",
+    "unlockLevel": 1,
+    "favoriteShop": "lantern_works",
+    "color": "#C8E86A",
+    "chatter": [
+      "Blink, blink!",
+      "Longest day, shortest night. Perfect."
+    ]
+  },
+  {
+    "id": "hob",
+    "name": "Hob Gourdley",
+    "folk": "Gourd-headed scarecrow-folk",
+    "blurb": "Came to scare the crows. Made friends with them instead.",
+    "rarity": "rare",
+    "arrival": "event",
+    "unlockLevel": 1,
+    "favoriteShop": "mossbread",
+    "color": "#E8873A",
+    "chatter": [
+      "Boo! Sorry. Habit.",
+      "The crows say hello."
+    ]
+  },
+  {
+    "id": "nyx",
+    "name": "Nyx Frostwhisker",
+    "folk": "Snow-hare-folk storyteller",
+    "blurb": "Arrives with the first frost and the best stories.",
+    "rarity": "rare",
+    "arrival": "event",
+    "unlockLevel": 1,
+    "favoriteShop": "toadstool_tea",
+    "color": "#BDD8E8",
+    "chatter": [
+      "Cold out, warm in here.",
+      "Have you heard the one about the frozen frog?"
+    ]
   }
 ]

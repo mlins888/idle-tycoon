@@ -123,6 +123,8 @@ struct BuildingDef: Codable, Identifiable, Hashable {
     /// Decorations only: which placeholder shape to draw until real art exists
     /// (`lamp`, `tree`, `flowers`, `path`, `statue`, `pond`, `fountain`).
     var shape: String?
+    /// Can only be built once unlocked on a festival's reward track.
+    var eventOnly: Bool = false
 
     /// The stage-1 name, used in the build menu and lists.
     var name: String { stages[0].name }
@@ -153,6 +155,7 @@ extension BuildingDef {
         unique = try c.decodeIfPresent(Bool.self, forKey: .unique) ?? false
         aura = try c.decodeIfPresent(Aura.self, forKey: .aura)
         shape = try c.decodeIfPresent(String.self, forKey: .shape)
+        eventOnly = try c.decodeIfPresent(Bool.self, forKey: .eventOnly) ?? false
         guard !stages.isEmpty else {
             throw DecodingError.dataCorruptedError(forKey: .stages, in: c, debugDescription: "\(id) has no stages")
         }
@@ -185,6 +188,8 @@ enum ArrivalKind: String, Codable {
     case story
     /// Only comes when summoned at the Wisp Shrine.
     case summon
+    /// Earned on a festival's reward track.
+    case event
 }
 
 /// One resident, as defined in `Content/residents.json`.
@@ -324,18 +329,87 @@ extension QuestDef {
     }
 }
 
+/// A month and day, e.g. `"10-15"` in JSON for 15 October.
+struct MonthDay: Hashable, Codable {
+    let month: Int
+    let day: Int
+
+    init(month: Int, day: Int) {
+        self.month = month
+        self.day = day
+    }
+
+    init(from decoder: Decoder) throws {
+        let text = try decoder.singleValueContainer().decode(String.self)
+        let parts = text.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 2, (1...12).contains(parts[0]), (1...31).contains(parts[1]) else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Expected MM-DD, got \(text)"))
+        }
+        month = parts[0]
+        day = parts[1]
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(String(format: "%02d-%02d", month, day))
+    }
+}
+
+/// What a festival milestone gives you.
+struct EventReward: Codable, Hashable {
+    var glimmer: Double = 0
+    var wisps: Double = 0
+    /// An `eventOnly` decoration that becomes buildable.
+    var decoration: String?
+    /// A resident (arrival `event`) who moves in once there's a bed.
+    var resident: String?
+}
+
+extension EventReward {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        glimmer = try c.decodeIfPresent(Double.self, forKey: .glimmer) ?? 0
+        wisps = try c.decodeIfPresent(Double.self, forKey: .wisps) ?? 0
+        decoration = try c.decodeIfPresent(String.self, forKey: .decoration)
+        resident = try c.decodeIfPresent(String.self, forKey: .resident)
+    }
+}
+
+struct Milestone: Codable, Hashable {
+    /// Festival tokens needed.
+    let tokens: Double
+    let reward: EventReward
+}
+
+/// A yearly festival, as defined in `Content/events.json`. Runs from `start` to `end` (inclusive) every
+/// year; a window can wrap past New Year (e.g. 12-15 to 01-05).
+struct EventDef: Codable, Identifiable, Hashable {
+    let id: String
+    let name: String
+    let blurb: String
+    let start: MonthDay
+    let end: MonthDay
+    /// The festival's currency, e.g. "moon-penny" / "moon-pennies".
+    let token: String
+    let tokens: String
+    let color: String
+    let milestones: [Milestone]
+}
+
 struct GameContent {
     let buildings: [BuildingDef]
     let residents: [ResidentDef]
     let quests: [QuestDef]
+    let events: [EventDef]
     private let buildingsById: [String: BuildingDef]
     private let residentsById: [String: ResidentDef]
     private let questsById: [String: QuestDef]
 
-    init(buildings: [BuildingDef], residents: [ResidentDef] = [], quests: [QuestDef] = []) {
+    init(buildings: [BuildingDef], residents: [ResidentDef] = [], quests: [QuestDef] = [], events: [EventDef] = []) {
         self.buildings = buildings
         self.residents = residents
         self.quests = quests
+        self.events = events
         self.buildingsById = Dictionary(uniqueKeysWithValues: buildings.map { ($0.id, $0) })
         self.residentsById = Dictionary(uniqueKeysWithValues: residents.map { ($0.id, $0) })
         self.questsById = Dictionary(uniqueKeysWithValues: quests.map { ($0.id, $0) })
@@ -348,7 +422,8 @@ struct GameContent {
     static func load(bundle: Bundle = .main) -> GameContent {
         GameContent(buildings: decode("buildings", bundle: bundle),
                     residents: decode("residents", bundle: bundle),
-                    quests: decode("quests", bundle: bundle))
+                    quests: decode("quests", bundle: bundle),
+                    events: decode("events", bundle: bundle))
     }
 
     private static func decode<T: Decodable>(_ name: String, bundle: Bundle) -> [T] {

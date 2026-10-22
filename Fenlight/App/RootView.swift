@@ -93,6 +93,18 @@ struct RootView: View {
                        message: stage.blurb,
                        detail: stage.sells.isEmpty ? nil : "Now selling " + stage.sells.joined(separator: ", ").lowercased(),
                        button: "Wonderful", onDismiss: dismiss)
+        case .eventStarted(let e):
+            NoticeCard(eyebrow: "A festival begins",
+                       title: e.name,
+                       message: e.blurb,
+                       detail: "Collect from shops to earn \(e.tokens) and unlock festival rewards.",
+                       button: "Let's celebrate", onDismiss: dismiss)
+        case .eventMilestone(let e, let index):
+            NoticeCard(eyebrow: "\(e.name) reward",
+                       title: "\(Int(e.milestones[index].tokens)) \(e.tokens)!",
+                       message: EventRewards.describe(e.milestones[index].reward, game.content),
+                       detail: e.milestones[index].reward.decoration != nil ? "Find it in the Build menu under Decorations." : nil,
+                       button: "Lovely", onDismiss: dismiss)
         case .questReady(let q):
             NoticeCard(eyebrow: "Quest complete",
                        title: q.title,

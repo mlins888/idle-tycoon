@@ -101,6 +101,16 @@ shop instead. Now and then one says a line from their `chatter` in a speech bubb
 who they are and give them a job. The **Registry** tab of the Townsfolk screen lists everyone in the
 game, with folk you haven't met shown as silhouettes and a hint about how to meet them.
 
+### Festivals
+
+Four festivals (`events.json`) run on the same dates every year, so no server is needed: Bloom
+Festival (spring), Midsummer Fireflies, Hollow Moon (autumn) and Midwinter Lights. `EventCalendar`
+works out which one is running from the phone's date (a window can wrap past New Year). During a
+festival, collecting from a shop that's at least a quarter full earns 1 festival token. Token
+milestones give wisps and glimmer, unlock festival-only decorations (`eventOnly`, buildable forever
+once unlocked) and invite a festival resident (arrival `event`), who moves in when there's a bed.
+Progress starts over when the festival comes round the next year.
+
 ### Quests
 
 Residents ask for things: collect glimmer from a shop, build something, reach a stage, cleanse murk,
@@ -143,15 +153,17 @@ decides draw order so buildings lower on the screen draw in front.
 | `SeededRandom.swift` | A small repeatable random generator. Its state is saved, so summons can't be re-rolled by restarting the app. |
 | `Economy.swift` | Game-wide balance formulas: worker bonuses, the decoration bonus cap, the refund for putting a decoration away, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
 | `Requirements.swift` | Checks a requirement (town level, a building at a stage, a resident, a finished quest, % restored) and describes it in plain words. Used by building stages and quests. |
+| `EventCalendar.swift` | Festival dates: which festival is running at a given moment, its start and end, and the next one to come. |
 | `Quests.swift` | Quest rules as plain functions: which quests can start, the counter value to remember when one starts, and how far along an objective is. |
 | `GameClock.swift` | The one source of "now". |
-| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `removeDecoration`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
+| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll` (both also earn festival tokens), `build`, `move`, `removeDecoration`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, festivals start and pay milestone rewards, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
 
 ### `Fenlight/Content`
 
 | File | What it does |
 |------|--------------|
 | `buildings.json` | Every building and its **stages**. Each stage has a name, description, what it sells, earning rate and how long it holds (shops) or beds (houses), plus the renovation cost, time and requirements to reach it. Fields that don't apply can be left out. |
+| `events.json` | The festivals: dates (`MM-DD`), token names, colour, and the milestone reward track. |
 | `quests.json` | Every quest: chapter, who gives it, title, text, the objective, the reward, and prerequisites. |
 | `residents.json` | Every resident: name, folk, description, rarity, how they arrive (`wanderer`, `story` or `summon`), unlock level, favourite shop, placeholder colour. |
 
@@ -174,6 +186,7 @@ decides draw order so buildings lower on the screen draw in front.
 | `Theme.swift` | UI colours (including rarity colours), fonts, the panel style (`fenPanel()`), button style, coin and wisp icons. Uses `ui.panel` / `ui.button` art when it exists. |
 | `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
 | `Panels.swift` | `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `EventView.swift` | The festival banner under the top bar and the festival reward track sheet. |
 | `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
 | `ResidentPanel.swift` | `ResidentPanel` (shown when you tap someone on the map, with a job picker) and `RegistryGrid` (everyone in the game, with hints for folk you haven't met). |
 | `ResidentsView.swift` | The Townsfolk screen with In town (everyone here, where they work, who's on the way) and Registry tabs, resident `Portrait`s, and the `ArrivalCard`. |
@@ -191,6 +204,7 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `EventTests.swift` | Checks for festival dates (including wrapping past New Year), earning tokens, milestone rewards, festival residents, progress resetting each year, loading version 3 saves, and that the shipped festivals are consistent and don't overlap. |
 | `WalkwayTests.swift` | Checks for walkable land, walking on paths, routes around buildings, unreachable spots, and that every resident has something to say. |
 | `DecorationTests.swift` | Checks for footprint distance, aura reach and stacking, the cap, paths, paying out before a change, moving, putting away and costs. |
 | `StageQuestTests.swift` | Checks for stages and renovation (requirements, paying out, closing and reopening, finishing while away, finish-now, house beds), quests (starting, progress, claiming, follow-ups, the three-quest limit), and that every id referenced in the shipped JSON exists. |
@@ -265,6 +279,7 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 |------------|-------|
 | Add or rebalance a building, or its stages | `Fenlight/Content/buildings.json` |
 | Add a quest | `Fenlight/Content/quests.json` |
+| Add or change a festival | `Fenlight/Content/events.json`, plus any `eventOnly` decorations in `buildings.json` and `event` residents in `residents.json` |
 | Add a decoration or change its aura | `Fenlight/Content/buildings.json` (`kind: "decoration"`, `aura`, `shape`) |
 | Change how far decoration bonuses can stack | `maxDecorationBonus` in `Economy.swift` |
 | Add a new kind of requirement or quest objective | `Requirement` / `Objective` in `Content.swift`, then `Requirements.swift` / `Quests.swift` |

@@ -967,5 +967,173 @@
       "radius": 3,
       "bonus": 0.12
     }
+  },
+  {
+    "id": "blossom_arch",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 400,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#E89AB8",
+    "shape": "tree",
+    "eventOnly": true,
+    "aura": {
+      "radius": 2,
+      "bonus": 0.08
+    },
+    "stages": [
+      {
+        "name": "Blossom Arch",
+        "blurb": "Bloom Festival. An arch of fen-cherry blossom that never quite stops falling."
+      }
+    ]
+  },
+  {
+    "id": "flower_barge",
+    "kind": "decoration",
+    "size": 2,
+    "cost": 1500,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#D98AB0",
+    "shape": "pond",
+    "eventOnly": true,
+    "aura": {
+      "radius": 2,
+      "bonus": 0.1
+    },
+    "stages": [
+      {
+        "name": "Flower Barge",
+        "blurb": "Bloom Festival. A little boat heaped with flowers, moored for good."
+      }
+    ]
+  },
+  {
+    "id": "firefly_tree",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 400,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#C8E86A",
+    "shape": "tree",
+    "eventOnly": true,
+    "aura": {
+      "radius": 2,
+      "bonus": 0.08
+    },
+    "stages": [
+      {
+        "name": "Firefly Jar Tree",
+        "blurb": "Midsummer. Jars of fireflies hung in the branches. They're let go at dawn."
+      }
+    ]
+  },
+  {
+    "id": "sun_dial",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 1500,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#E8C86A",
+    "shape": "statue",
+    "eventOnly": true,
+    "aura": {
+      "radius": 3,
+      "bonus": 0.1
+    },
+    "stages": [
+      {
+        "name": "Midsummer Sundial",
+        "blurb": "Midsummer. Tells the time, and on the longest day, something more."
+      }
+    ]
+  },
+  {
+    "id": "gourd_lanterns",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 400,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#E8873A",
+    "shape": "lamp",
+    "eventOnly": true,
+    "aura": {
+      "radius": 2,
+      "bonus": 0.08
+    },
+    "stages": [
+      {
+        "name": "Gourd Lanterns",
+        "blurb": "Hollow Moon. Carved gourds with candles inside, grinning at passers-by."
+      }
+    ]
+  },
+  {
+    "id": "moon_gate",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 1500,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#C8C0E8",
+    "shape": "statue",
+    "eventOnly": true,
+    "aura": {
+      "radius": 3,
+      "bonus": 0.1
+    },
+    "stages": [
+      {
+        "name": "Moon Gate",
+        "blurb": "Hollow Moon. A round stone gate. On festival nights, the moon sits right in it."
+      }
+    ]
+  },
+  {
+    "id": "midwinter_tree",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 400,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#3E7A5A",
+    "shape": "tree",
+    "eventOnly": true,
+    "aura": {
+      "radius": 2,
+      "bonus": 0.08
+    },
+    "stages": [
+      {
+        "name": "Midwinter Tree",
+        "blurb": "Midwinter Lights. A fir hung with a hundred tiny lanterns."
+      }
+    ]
+  },
+  {
+    "id": "ice_lantern",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 1500,
+    "unlockLevel": 1,
+    "xp": 10,
+    "color": "#BDE8F2",
+    "shape": "lamp",
+    "eventOnly": true,
+    "aura": {
+      "radius": 3,
+      "bonus": 0.1
+    },
+    "stages": [
+      {
+        "name": "Ice Lantern",
+        "blurb": "Midwinter Lights. A lantern carved from river ice. It won't melt till spring."
+      }
+    ]
   }
 ]

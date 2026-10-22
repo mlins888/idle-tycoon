@@ -45,9 +45,18 @@ extension Stats {
     }
 }
 
+/// How far the player got in one year's run of a festival.
+struct EventProgress: Codable, Equatable {
+    /// The year this run started; progress resets when the festival comes round again.
+    var year: Int
+    var tokens: Double = 0
+    /// How many milestones have been reached (and their rewards given).
+    var reached: Int = 0
+}
+
 /// Everything that gets saved. Kept as plain data so it can be encoded and tested easily.
 struct GameState: Codable, Equatable {
-    static let currentVersion = 3
+    static let currentVersion = 4
 
     var version: Int = GameState.currentVersion
     var glimmer: Double
@@ -72,6 +81,14 @@ struct GameState: Codable, Equatable {
     /// Quests in progress, with the counter value when each started (for "collect N more" goals).
     var activeQuests: [String: Double] = [:]
     var completedQuests: Set<String> = []
+
+    // Added in version 4.
+    /// Festival progress by festival id.
+    var eventProgress: [String: EventProgress] = [:]
+    /// Festival decorations that can now be built.
+    var unlockedDecorations: Set<String> = []
+    /// Festival residents who've been invited and will move in when there's a bed.
+    var invitedResidents: Set<String> = []
 
     static func newGame(now: Date) -> GameState {
         GameState(
@@ -135,5 +152,8 @@ extension GameState {
         stats = try c.decodeIfPresent(Stats.self, forKey: .stats) ?? Stats()
         activeQuests = try c.decodeIfPresent([String: Double].self, forKey: .activeQuests) ?? [:]
         completedQuests = try c.decodeIfPresent(Set<String>.self, forKey: .completedQuests) ?? []
+        eventProgress = try c.decodeIfPresent([String: EventProgress].self, forKey: .eventProgress) ?? [:]
+        unlockedDecorations = try c.decodeIfPresent(Set<String>.self, forKey: .unlockedDecorations) ?? []
+        invitedResidents = try c.decodeIfPresent(Set<String>.self, forKey: .invitedResidents) ?? []
     }
 }

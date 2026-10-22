@@ -52,6 +52,9 @@ struct RegistryGrid: View {
             return r.unlockLevel > game.level ? "May wander in from level \(r.unlockLevel)" : "Might wander in when a bed is free"
         case .summon:
             return "Summon at the Wisp Shrine"
+        case .event:
+            let e = game.content.events.first { $0.milestones.contains { $0.reward.resident == r.id } }
+            return e.map { "Earned at the \($0.name)" } ?? "Earned at a festival"
         }
     }
 }
