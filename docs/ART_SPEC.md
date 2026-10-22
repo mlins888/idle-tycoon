@@ -40,6 +40,10 @@ stages can be taller. Stage names are in `buildings.json`.
 | 2×2  | 512                | 512 × 256               |
 | 3×3  | 768                | 768 × 384               |
 
+**Decorations** use the same naming and canvas rules (`building.rushlight_post`, `building.lily_pond`).
+They're usually small, so most of the canvas can be transparent. Paths should be flat and fill the
+footprint diamond.
+
 ## Resident portraits
 
 Asset name: `resident.<id>`, where `<id>` is the resident's `id` in `Fenlight/Content/residents.json`

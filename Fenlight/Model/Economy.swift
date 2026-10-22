@@ -10,10 +10,13 @@ enum Economy {
         isFavorite ? 0.6 : 0.25
     }
 
-    /// Glimmer per second for a shop at `stage`, including its workers' bonuses.
-    static func rate(_ def: BuildingDef, stage: Int, workers: [ResidentDef] = []) -> Double {
+    /// The most decorations can add to one shop, however many are nearby.
+    static let maxDecorationBonus = 0.5
+
+    /// Glimmer per second for a shop at `stage`, including worker and decoration bonuses.
+    static func rate(_ def: BuildingDef, stage: Int, workers: [ResidentDef] = [], decorationBonus: Double = 0) -> Double {
         let bonus = workers.reduce(0) { $0 + workerBonus(isFavorite: $1.favoriteShop == def.id) }
-        return def.stage(stage).rate * (1 + bonus)
+        return def.stage(stage).rate * (1 + bonus + min(maxDecorationBonus, decorationBonus))
     }
 
     /// How much a shop holds before it's full, given its current rate.
@@ -27,9 +30,15 @@ enum Economy {
         return min(capacity, rate * elapsed)
     }
 
-    /// Each extra copy of the same building costs more.
+    /// Each extra copy of the same building costs more (decorations only a little more).
     static func buildCost(_ def: BuildingDef, owned: Int) -> Double {
-        (def.cost * pow(1.35, Double(owned))).rounded()
+        let growth = def.kind == .decoration ? 1.12 : 1.35
+        return (def.cost * pow(growth, Double(owned))).rounded()
+    }
+
+    /// Glimmer back when a decoration is put away.
+    static func removalRefund(_ def: BuildingDef) -> Double {
+        (def.cost * 0.5).rounded()
     }
 
     // MARK: Renovation

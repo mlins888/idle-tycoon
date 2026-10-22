@@ -20,7 +20,9 @@ final class ArtCatalog {
     /// Stage 1 art is `building.<id>`; later stages are `building.<id>.2`, `building.<id>.3`.
     func building(_ def: BuildingDef, stage: Int = 1) -> SKTexture {
         let id = stage <= 1 ? "building.\(def.id)" : "building.\(def.id).\(stage)"
-        return texture(id) { Placeholder.building(def, stage: stage) }
+        return texture(id) {
+            def.kind == .decoration ? Placeholder.decoration(def) : Placeholder.building(def, stage: stage)
+        }
     }
 
     /// A resident's portrait, for SwiftUI screens. Falls back to initials on their colour.
@@ -95,6 +97,107 @@ enum Placeholder {
         }
     }
 
+    /// Simple drawn decorations, picked by the `shape` field in buildings.json.
+    static func decoration(_ def: BuildingDef) -> UIImage {
+        let n = CGFloat(def.size)
+        let w = IsoMath.tileWidth * n, footH = IsoMath.tileHeight * n
+        let shape = def.shape ?? "statue"
+        let extra: CGFloat = switch shape {
+        case "lamp": 110
+        case "tree": 130
+        case "statue": 90
+        case "fountain": 60
+        case "flowers": 16
+        default: 0
+        }
+        let canvas = CGSize(width: w, height: footH + extra)
+        let color = UIColor(hex: def.color)
+        let ink = UIColor(hex: "#1D1A24")
+
+        return UIGraphicsImageRenderer(size: canvas).image { ctx in
+            let g = ctx.cgContext
+            let cx = w / 2, cy = canvas.height - footH / 2
+            g.setLineWidth(2)
+            g.setLineJoin(.round)
+            g.setStrokeColor(ink.cgColor)
+
+            func diamond(scale: CGFloat, lift: CGFloat = 0) -> CGPath {
+                let hw = w / 2 * scale, hh = footH / 2 * scale
+                let p = CGMutablePath()
+                p.addLines(between: [CGPoint(x: cx, y: cy - hh - lift), CGPoint(x: cx + hw, y: cy - lift),
+                                     CGPoint(x: cx, y: cy + hh - lift), CGPoint(x: cx - hw, y: cy - lift)])
+                p.closeSubpath()
+                return p
+            }
+            func fillPath(_ path: CGPath, _ c: UIColor, stroke: Bool = true) {
+                g.addPath(path)
+                g.setFillColor(c.cgColor)
+                g.drawPath(using: stroke ? .fillStroke : .fill)
+            }
+            func ellipse(_ r: CGRect, _ c: UIColor, stroke: Bool = true) {
+                fillPath(CGPath(ellipseIn: r, transform: nil), c, stroke: stroke)
+            }
+
+            switch shape {
+            case "path":
+                fillPath(diamond(scale: 0.96), color)
+                g.setStrokeColor(color.adjusted(by: -0.2).cgColor)
+                for i in 1..<4 {
+                    let t = CGFloat(i) / 4
+                    g.move(to: CGPoint(x: cx - w / 2 * 0.96 * (1 - t), y: cy - footH / 2 * 0.96 * t))
+                    g.addLine(to: CGPoint(x: cx + w / 2 * 0.96 * t, y: cy + footH / 2 * 0.96 * (1 - t)))
+                }
+                g.strokePath()
+            case "flowers":
+                fillPath(diamond(scale: 0.7), UIColor(hex: "#4E7A3E"), stroke: false)
+                for (dx, dy) in [(-22.0, -4.0), (8.0, -12.0), (20.0, 4.0), (-6.0, 8.0), (-30.0, 6.0), (30.0, -6.0)] {
+                    ellipse(CGRect(x: cx + dx - 7, y: cy + dy - 7 - 8, width: 14, height: 14), color)
+                    ellipse(CGRect(x: cx + dx - 2.5, y: cy + dy - 2.5 - 8, width: 5, height: 5), UIColor(hex: "#8A5B00"), stroke: false)
+                }
+            case "lamp":
+                fillPath(diamond(scale: 0.3), UIColor(hex: "#6B5A48"))
+                g.addRect(CGRect(x: cx - 4, y: cy - extra + 12, width: 8, height: extra - 12))
+                g.setFillColor(UIColor(hex: "#3A2F28").cgColor)
+                g.drawPath(using: .fillStroke)
+                let glow = CGRect(x: cx - 26, y: cy - extra - 18, width: 52, height: 52)
+                ellipse(glow, color.withAlphaComponent(0.25), stroke: false)
+                ellipse(glow.insetBy(dx: 12, dy: 12), color)
+            case "tree":
+                fillPath(diamond(scale: 0.55), UIColor(hex: "#3E5A34"), stroke: false)
+                g.addRect(CGRect(x: cx - 7, y: cy - 60, width: 14, height: 60))
+                g.setFillColor(UIColor(hex: "#5A4632").cgColor)
+                g.drawPath(using: .fillStroke)
+                ellipse(CGRect(x: cx - 52, y: cy - extra - 20, width: 104, height: 100), color.adjusted(by: -0.1))
+                ellipse(CGRect(x: cx - 38, y: cy - extra - 26, width: 70, height: 66), color.adjusted(by: 0.08))
+            case "statue":
+                fillPath(diamond(scale: 0.5), UIColor(hex: "#6E7A74"))
+                g.addRect(CGRect(x: cx - 20, y: cy - 40, width: 40, height: 36))
+                g.setFillColor(UIColor(hex: "#7F8C86").cgColor)
+                g.drawPath(using: .fillStroke)
+                ellipse(CGRect(x: cx - 22, y: cy - 78, width: 44, height: 40), color)
+                ellipse(CGRect(x: cx - 16, y: cy - 86, width: 12, height: 12), color.adjusted(by: 0.1))
+                ellipse(CGRect(x: cx + 4, y: cy - 86, width: 12, height: 12), color.adjusted(by: 0.1))
+            case "pond", "fountain":
+                fillPath(diamond(scale: 0.92), UIColor(hex: "#8A8F80"))
+                fillPath(diamond(scale: 0.75), color, stroke: false)
+                if shape == "pond" {
+                    for (dx, dy) in [(-30.0, -6.0), (24.0, 10.0), (10.0, -20.0)] {
+                        ellipse(CGRect(x: cx + dx - 12, y: cy + dy - 6, width: 24, height: 12), UIColor(hex: "#6E9A5A"))
+                    }
+                } else {
+                    g.addRect(CGRect(x: cx - 8, y: cy - extra + 10, width: 16, height: extra - 10))
+                    g.setFillColor(UIColor(hex: "#9AA39A").cgColor)
+                    g.drawPath(using: .fillStroke)
+                    let spray = CGRect(x: cx - 30, y: cy - extra - 16, width: 60, height: 40)
+                    ellipse(spray, color.withAlphaComponent(0.35), stroke: false)
+                    ellipse(spray.insetBy(dx: 16, dy: 10), UIColor.white.withAlphaComponent(0.8), stroke: false)
+                }
+            default:
+                fillPath(diamond(scale: 0.6), color)
+            }
+        }
+    }
+
     /// An isometric block with walls, a pyramid roof in the building's colour, a door and a lit window.
     /// Houses are lower, the shrine and guild have tall spires, so kinds are easy to tell apart.
     /// Later stages are taller, fly a pennant and have more lit windows.
@@ -107,6 +210,7 @@ enum Placeholder {
         case .house: (0.75, 1.15)
         case .shrine: (0.7, 2.2)
         case .guild: (1.3, 1.6)
+        case .decoration: (0.5, 0.5)
         }
         let wallH: CGFloat = (30 + 18 * n) * wallScale * grow
         let roofH: CGFloat = (26 + 16 * n) * roofScale * grow

@@ -98,6 +98,10 @@ struct BuildingPanel: View {
             } else {
                 HStack(spacing: 16) {
                     stat("Makes", "\(Format.compact(rate * 60))/min")
+                    let decor = game.decorationBonus(building)
+                    if decor > 0 {
+                        stat("Decor", "+\(Int((decor * 100).rounded()))%")
+                    }
                     if auto {
                         stat("Keeper", "Collecting")
                     } else {
@@ -435,6 +439,55 @@ struct ShrinePanel: View {
     }
 }
 
+/// A placed decoration: what it boosts, move it, or put it away.
+struct DecorationPanel: View {
+    let game: Game
+    let ui: MapInteraction
+    let building: PlacedBuilding
+    @State private var confirmRemove = false
+
+    var body: some View {
+        let def = game.def(for: building)
+        let reached = game.shopsReached(by: building)
+        VStack(alignment: .leading, spacing: 10) {
+            PanelHeader(title: def?.name ?? "Decoration", detail: nil) { ui.clearSelection() }
+            if let def { Blurb(text: def.blurb) }
+            if let aura = def?.aura {
+                Text("+\(Int((aura.bonus * 100).rounded()))% to shops within \(aura.radius) tile\(aura.radius == 1 ? "" : "s")")
+                    .font(Theme.body(13, weight: .semibold))
+                    .foregroundStyle(Theme.wisp)
+                Text(reached.isEmpty ? "No shops nearby yet. Move it closer to some."
+                                     : "Boosting: " + reached.map(game.name).joined(separator: ", "))
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textDim)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 10) {
+                Button("Move") { ui.startMoving(building.id, from: building.origin) }
+                    .buttonStyle(FenButtonStyle())
+                if let def {
+                    Button {
+                        if confirmRemove {
+                            if game.removeDecoration(building.id) { ui.clearSelection() }
+                        } else {
+                            confirmRemove = true
+                        }
+                    } label: {
+                        if confirmRemove {
+                            Text("Tap again to put away").frame(maxWidth: .infinity)
+                        } else {
+                            CostLabel(verb: "Put away · get back", cost: Economy.removalRefund(def))
+                        }
+                    }
+                    .buttonStyle(FenButtonStyle())
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fenPanel()
+    }
+}
+
 struct GuildPanel: View {
     let game: Game
     let ui: MapInteraction
@@ -505,6 +558,7 @@ struct BuildMenu: View {
                     .padding(.top, 20)
                 section("Shops", kinds: [.shop])
                 section("Homes", kinds: [.house])
+                section("Decorations", kinds: [.decoration])
                 section("Special", kinds: [.shrine, .guild])
             }
             .padding(.horizontal, 16)
@@ -531,6 +585,9 @@ struct BuildMenu: View {
         case .house: return "\(def.stage(1).beds) bed\(def.stage(1).beds == 1 ? "" : "s")"
         case .shrine: return "Summon rare residents"
         case .guild: return "Unlocks auto-collect"
+        case .decoration:
+            guard let aura = def.aura else { return "Just for looks" }
+            return "+\(Int((aura.bonus * 100).rounded()))% to shops within \(aura.radius) tile\(aura.radius == 1 ? "" : "s")"
         }
     }
 

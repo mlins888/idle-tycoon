@@ -57,6 +57,7 @@ struct HUDView: View {
                 case .house: HousePanel(game: game, ui: ui, building: b)
                 case .shrine: ShrinePanel(game: game, ui: ui, building: b, onSummon: onSummon)
                 case .guild: GuildPanel(game: game, ui: ui, building: b)
+                case .decoration: DecorationPanel(game: game, ui: ui, building: b)
                 }
             } else if let chunk = ui.selectedChunk {
                 CleansePanel(game: game, ui: ui, chunk: chunk)
@@ -191,6 +192,13 @@ private struct PlacementBar: View {
                        : "That spot is blocked or still under murk. Tap somewhere else.")
                 .font(Theme.body(13))
                 .foregroundStyle(valid ? Theme.textDim : Theme.ember)
+            if let def, let aura = def.aura, let origin = ui.ghostOrigin {
+                let probe = PlacedBuilding(id: movingId ?? -1, defId: def.id, origin: origin, stage: 1, lastCollectedAt: .now)
+                let count = game.shopsReached(by: probe).count
+                Text("+\(Int((aura.bonus * 100).rounded()))% to shops within \(aura.radius) tile\(aura.radius == 1 ? "" : "s"). Here it would boost \(count) shop\(count == 1 ? "" : "s").")
+                    .font(Theme.body(13, weight: .semibold))
+                    .foregroundStyle(Theme.wisp)
+            }
             HStack(spacing: 10) {
                 Button("Cancel") { ui.finishPlacement() }
                     .buttonStyle(FenButtonStyle())

@@ -62,6 +62,30 @@
     ]
   },
   {
+    "id": "light_the_way",
+    "chapter": 1,
+    "giver": "wren",
+    "title": "Light the Way",
+    "text": "Folk find their way by lamplight. Put up three Rushlight Posts near the shops, and watch how much longer people linger.",
+    "doneText": "Three posts, three little lights. The town looks like it's waking up.",
+    "objective": {
+      "type": "build",
+      "building": "rushlight_post",
+      "count": 3
+    },
+    "reward": {
+      "glimmer": 120,
+      "wisps": 2,
+      "xp": 30
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "first_light"
+      }
+    ]
+  },
+  {
     "id": "ovens_warm",
     "chapter": 1,
     "giver": "marigold",

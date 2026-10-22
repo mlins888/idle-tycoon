@@ -129,10 +129,37 @@ final class Game {
         Residents.workers(at: shopId, in: state).compactMap { content.resident($0.defId) }
     }
 
-    /// Glimmer per second, including worker bonuses. Zero while renovating.
+    /// Glimmer per second, including worker and decoration bonuses. Zero while renovating.
     func rate(_ b: PlacedBuilding) -> Double {
         guard let def = def(for: b), def.kind == .shop, !b.isRenovating else { return 0 }
-        return Economy.rate(def, stage: b.stage, workers: workers(at: b.id))
+        return Economy.rate(def, stage: b.stage, workers: workers(at: b.id), decorationBonus: decorationBonus(b))
+    }
+
+    // MARK: - Reading: decorations
+
+    /// Whether decoration `d` reaches shop `s` with its aura.
+    func reaches(_ d: PlacedBuilding, _ s: PlacedBuilding) -> Bool {
+        guard let dd = def(for: d), let aura = dd.aura, let sd = def(for: s), sd.kind == .shop else { return false }
+        return World.distance(d.origin, size: dd.size, s.origin, size: sd.size) <= aura.radius
+    }
+
+    /// Total boost from nearby decorations, before the cap.
+    func decorationBonusUncapped(_ shop: PlacedBuilding) -> Double {
+        state.buildings.reduce(0) { total, d in
+            reaches(d, shop) ? total + (def(for: d)?.aura?.bonus ?? 0) : total
+        }
+    }
+
+    /// Boost from nearby decorations, capped at `Economy.maxDecorationBonus`.
+    func decorationBonus(_ shop: PlacedBuilding) -> Double {
+        min(Economy.maxDecorationBonus, decorationBonusUncapped(shop))
+    }
+
+    /// Shops a decoration boosts (or would boost, if it stood at `origin`).
+    func shopsReached(by decoration: PlacedBuilding, at origin: Tile? = nil) -> [PlacedBuilding] {
+        var d = decoration
+        if let origin { d.origin = origin }
+        return state.buildings.filter { $0.id != d.id && reaches(d, $0) }
     }
 
     func capacity(_ b: PlacedBuilding) -> Double {
@@ -333,6 +360,7 @@ final class Game {
         guard let def = content.building(defId), isUnlocked(def), canBuildMore(def) else { return false }
         let cost = buildCost(def)
         guard state.glimmer >= cost, canPlace(defId, at: origin) else { return false }
+        if def.kind == .decoration { settleAllShops() }
         state.glimmer -= cost
         state.xp += def.xp
         state.buildings.append(PlacedBuilding(id: state.nextBuildingId, defId: defId, origin: origin,
@@ -348,7 +376,21 @@ final class Game {
     func move(_ id: Int, to origin: Tile) -> Bool {
         guard let i = index(of: id),
               canPlace(state.buildings[i].defId, at: origin, ignoring: id) else { return false }
+        // Moving changes which decorations reach which shops, so pay out at the old rates first.
+        if def(for: state.buildings[i])?.kind == .decoration { settleAllShops() } else { settle(i) }
         state.buildings[i].origin = origin
+        layoutRevision += 1
+        save()
+        return true
+    }
+
+    /// Puts a decoration away, refunding half its base cost.
+    @discardableResult
+    func removeDecoration(_ id: Int) -> Bool {
+        guard let i = index(of: id), let def = def(for: state.buildings[i]), def.kind == .decoration else { return false }
+        settleAllShops()
+        state.buildings.remove(at: i)
+        state.glimmer += Economy.removalRefund(def)
         layoutRevision += 1
         save()
         return true
@@ -585,6 +627,12 @@ final class Game {
             credit(pending(b), from: b.defId)
         }
         state.buildings[i].lastCollectedAt = now
+    }
+
+    private func settleAllShops() {
+        for i in state.buildings.indices where def(for: state.buildings[i])?.kind == .shop {
+            settle(i)
+        }
     }
 
     private func index(of id: Int) -> Int? {

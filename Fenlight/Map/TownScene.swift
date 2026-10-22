@@ -25,6 +25,8 @@ final class TownScene: SKScene {
     private var ghostDefId: String?
     private let footprintOutline = SKShapeNode()
     private let chunkOutline = SKShapeNode()
+    /// The reach of a decoration's aura, shown while placing or when one is selected.
+    private let auraOutline = SKShapeNode()
 
     // Colours the fen moves between as it's restored.
     private let gloomSky = UIColor(hex: "#151C1A")
@@ -83,6 +85,12 @@ final class TownScene: SKScene {
         chunkOutline.isHidden = true
         overlayLayer.addChild(chunkOutline)
 
+        auraOutline.lineWidth = 2
+        auraOutline.strokeColor = UIColor(hex: "#7FE3D6")
+        auraOutline.fillColor = UIColor(hex: "#7FE3D6").withAlphaComponent(0.1)
+        auraOutline.isHidden = true
+        overlayLayer.addChild(auraOutline)
+
         footprintOutline.lineWidth = 2
         footprintOutline.zPosition = 1
         footprintOutline.isHidden = true
@@ -117,6 +125,7 @@ final class TownScene: SKScene {
         }
         updatePlacementOverlay()
         updateChunkOutline()
+        updateAuraOutline()
     }
 
     private func syncLayout() {
@@ -209,6 +218,28 @@ final class TownScene: SKScene {
         footprintOutline.path = IsoMath.diamondPath(origin: origin, size: def.size)
         footprintOutline.strokeColor = color
         footprintOutline.fillColor = color.withAlphaComponent(0.25)
+    }
+
+    /// Outlines the area a decoration's aura reaches: while placing or moving one, or while one is selected.
+    private func updateAuraOutline() {
+        var shown: (def: BuildingDef, origin: Tile)?
+        switch ui.mode {
+        case .placing(let defId):
+            if let def = game.content.building(defId), let origin = ui.ghostOrigin { shown = (def, origin) }
+        case .moving(let id):
+            if let b = game.building(id: id), let def = game.def(for: b), let origin = ui.ghostOrigin { shown = (def, origin) }
+        case .browse:
+            if let id = ui.selectedBuildingId, let b = game.building(id: id), let def = game.def(for: b) {
+                shown = (def, b.origin)
+            }
+        }
+        guard let (def, origin) = shown, let aura = def.aura else {
+            auraOutline.isHidden = true
+            return
+        }
+        auraOutline.isHidden = false
+        let r = aura.radius
+        auraOutline.path = IsoMath.diamondPath(origin: Tile(c: origin.c - r, r: origin.r - r), size: def.size + 2 * r)
     }
 
     private func updateChunkOutline() {

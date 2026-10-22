@@ -9,6 +9,14 @@ enum BuildingKind: String, Codable {
     case shrine
     /// The Lamplighters' Guild, which unlocks Keeper's Charters (auto-collect).
     case guild
+    /// Lanterns, trees, paths and the like. Most boost nearby shops.
+    case decoration
+}
+
+/// A decoration's boost to nearby shops: shops within `radius` tiles earn `bonus` more (0.05 = +5%).
+struct Aura: Codable, Hashable {
+    let radius: Int
+    let bonus: Double
 }
 
 /// Something that has to be true before a building stage or a quest unlocks.
@@ -110,6 +118,11 @@ struct BuildingDef: Codable, Identifiable, Hashable {
     let stages: [StageDef]
     /// Only one can be built per town (the shrine and the guild).
     var unique: Bool = false
+    /// Decorations only: the boost they give nearby shops (nil for purely decorative ones, like paths).
+    var aura: Aura?
+    /// Decorations only: which placeholder shape to draw until real art exists
+    /// (`lamp`, `tree`, `flowers`, `path`, `statue`, `pond`, `fountain`).
+    var shape: String?
 
     /// The stage-1 name, used in the build menu and lists.
     var name: String { stages[0].name }
@@ -138,6 +151,8 @@ extension BuildingDef {
         color = try c.decode(String.self, forKey: .color)
         stages = try c.decode([StageDef].self, forKey: .stages)
         unique = try c.decodeIfPresent(Bool.self, forKey: .unique) ?? false
+        aura = try c.decodeIfPresent(Aura.self, forKey: .aura)
+        shape = try c.decodeIfPresent(String.self, forKey: .shape)
         guard !stages.isEmpty else {
             throw DecodingError.dataCorruptedError(forKey: .stages, in: c, debugDescription: "\(id) has no stages")
         }

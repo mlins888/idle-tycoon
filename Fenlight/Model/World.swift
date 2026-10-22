@@ -58,6 +58,13 @@ enum World {
         return Tile(c: tile.c - back, r: tile.r - back)
     }
 
+    /// How many tiles apart two square footprints are: 1 when side by side or diagonal, 0 when overlapping.
+    static func distance(_ a: Tile, size sa: Int, _ b: Tile, size sb: Int) -> Int {
+        let dc = max(0, max(a.c - (b.c + sb - 1), b.c - (a.c + sa - 1)))
+        let dr = max(0, max(a.r - (b.r + sb - 1), b.r - (a.r + sa - 1)))
+        return max(dc, dr)
+    }
+
     static func neighbors(of ch: Chunk) -> [Chunk] {
         [Chunk(cx: ch.cx + 1, cy: ch.cy), Chunk(cx: ch.cx - 1, cy: ch.cy),
          Chunk(cx: ch.cx, cy: ch.cy + 1), Chunk(cx: ch.cx, cy: ch.cy - 1)]

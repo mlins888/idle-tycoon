@@ -811,5 +811,161 @@
         "blurb": "Grants Keeper's Charters, so your workers can collect for you."
       }
     ]
+  },
+  {
+    "id": "boardwalk",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 10,
+    "unlockLevel": 1,
+    "xp": 1,
+    "color": "#8A6A4A",
+    "shape": "path",
+    "stages": [
+      {
+        "name": "Boardwalk",
+        "blurb": "Planks over the mud. Purely for looks, and for dry feet."
+      }
+    ]
+  },
+  {
+    "id": "marsh_marigolds",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 20,
+    "unlockLevel": 1,
+    "xp": 1,
+    "color": "#E8C547",
+    "shape": "flowers",
+    "stages": [
+      {
+        "name": "Marsh Marigolds",
+        "blurb": "A bright patch of yellow in the gloom."
+      }
+    ],
+    "aura": {
+      "radius": 1,
+      "bonus": 0.03
+    }
+  },
+  {
+    "id": "rushlight_post",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 30,
+    "unlockLevel": 1,
+    "xp": 1,
+    "color": "#F2B544",
+    "shape": "lamp",
+    "stages": [
+      {
+        "name": "Rushlight Post",
+        "blurb": "A tall post with a rushlight on top. Folk shop longer where it's bright."
+      }
+    ],
+    "aura": {
+      "radius": 1,
+      "bonus": 0.05
+    }
+  },
+  {
+    "id": "weeping_willow",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 150,
+    "unlockLevel": 2,
+    "xp": 3,
+    "color": "#6E9A5A",
+    "shape": "tree",
+    "stages": [
+      {
+        "name": "Weeping Willow",
+        "blurb": "Shade, birdsong and somewhere to sit."
+      }
+    ],
+    "aura": {
+      "radius": 2,
+      "bonus": 0.05
+    }
+  },
+  {
+    "id": "frog_king_statue",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 800,
+    "unlockLevel": 3,
+    "xp": 7,
+    "color": "#8FA39A",
+    "shape": "statue",
+    "stages": [
+      {
+        "name": "Frog-King Statue",
+        "blurb": "Nobody remembers which frog-king. Everyone agrees he looks dignified."
+      }
+    ],
+    "aura": {
+      "radius": 2,
+      "bonus": 0.08
+    }
+  },
+  {
+    "id": "lily_pond",
+    "kind": "decoration",
+    "size": 2,
+    "cost": 2000,
+    "unlockLevel": 4,
+    "xp": 11,
+    "color": "#4E8C9A",
+    "shape": "pond",
+    "stages": [
+      {
+        "name": "Lily Pond",
+        "blurb": "Still water, lily pads and the occasional opinionated frog."
+      }
+    ],
+    "aura": {
+      "radius": 2,
+      "bonus": 0.1
+    }
+  },
+  {
+    "id": "wisp_fountain",
+    "kind": "decoration",
+    "size": 2,
+    "cost": 25000,
+    "unlockLevel": 6,
+    "xp": 40,
+    "color": "#7FE3D6",
+    "shape": "fountain",
+    "stages": [
+      {
+        "name": "Wisp Fountain",
+        "blurb": "Water that glows faintly after dark. Visitors come from all over to see it."
+      }
+    ],
+    "aura": {
+      "radius": 3,
+      "bonus": 0.15
+    }
+  },
+  {
+    "id": "lantern_arch",
+    "kind": "decoration",
+    "size": 1,
+    "cost": 120000,
+    "unlockLevel": 8,
+    "xp": 87,
+    "color": "#F2C14E",
+    "shape": "lamp",
+    "stages": [
+      {
+        "name": "Lantern Arch",
+        "blurb": "An arch strung with lanterns. The Thief never got these."
+      }
+    ],
+    "aura": {
+      "radius": 3,
+      "bonus": 0.12
+    }
   }
 ]

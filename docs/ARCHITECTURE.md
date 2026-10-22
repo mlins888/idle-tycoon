@@ -83,6 +83,15 @@ once its **requirements** are met (town level, another building at a stage, a re
 a finished quest, or how much of the fen is restored), then the building closes for a while and reopens
 transformed. Growth comes from more kinds of buildings and more stages, defined in `buildings.json`.
 
+### Decorations
+
+Lanterns, flowers, paths, trees, statues, ponds and fountains are placed on the grid like buildings
+(`kind: "decoration"` in `buildings.json`). Most have an **aura**: shops within `radius` tiles earn
+`bonus` more (`World.distance` measures the gap between footprints). Auras from several decorations
+stack, up to `Economy.maxDecorationBonus` (+50%) per shop, so where you put things matters. Paths
+have no aura. Placing, moving or putting away a decoration first pays out every shop at its old rate,
+so a new bonus never applies to time that already passed.
+
 ### Quests
 
 Residents ask for things: collect glimmer from a shop, build something, reach a stage, cleanse murk,
@@ -118,16 +127,16 @@ decides draw order so buildings lower on the screen draw in front.
 
 | File | What it does |
 |------|--------------|
-| `World.swift` | Fixed facts about the map: `Tile`, `Chunk`, the map size, the starting land, footprint and neighbour helpers. |
+| `World.swift` | Fixed facts about the map: `Tile`, `Chunk`, the map size, the starting land, footprint and neighbour helpers, and the distance between two footprints (for decoration auras). |
 | `Content.swift` | The shapes of the content files: `BuildingDef` (one *kind* of building) with its `StageDef`s, `Requirement`, `ResidentDef`, and `QuestDef` with its `Objective` and `Reward`. Loaded from `buildings.json`, `residents.json` and `quests.json`. |
 | `GameState.swift` | Everything that gets saved: glimmer, wisps, XP, placed buildings (`PlacedBuilding`, with their stage and any renovation in progress), cleansed chunks, residents (`Resident`), when the next wanderer arrives, the random generator's state, lifetime counters for quests (`Stats`), active and finished quests. `newGame()` sets up a fresh town. Decodes older saves by filling in defaults for newer fields. |
 | `Residents.swift` | Rules about residents as plain functions: beds, who's waiting for a bed, who can wander in next, summon odds and the summon roll. |
 | `SeededRandom.swift` | A small repeatable random generator. Its state is saved, so summons can't be re-rolled by restarting the app. |
-| `Economy.swift` | Game-wide balance formulas: worker bonuses, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
+| `Economy.swift` | Game-wide balance formulas: worker bonuses, the decoration bonus cap, the refund for putting a decoration away, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
 | `Requirements.swift` | Checks a requirement (town level, a building at a stage, a resident, a finished quest, % restored) and describes it in plain words. Used by building stages and quests. |
 | `Quests.swift` | Quest rules as plain functions: which quests can start, the counter value to remember when one starts, and how far along an objective is. |
 | `GameClock.swift` | The one source of "now". |
-| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
+| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `removeDecoration`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
 
 ### `Fenlight/Content`
 
@@ -142,10 +151,10 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `IsoMath.swift` | Tile ↔ screen conversions, where a building's picture is anchored, draw order, and outline shapes for footprints and chunks. |
-| `TownScene.swift` | The SpriteKit scene. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
+| `TownScene.swift` | The SpriteKit scene. Outlines a decoration's aura while placing it or when it's selected. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
 | `BuildingNode.swift` | One building on the map: its picture, the glimmer bubble above it (which bobs when full), coloured dots for its workers, and a glowing lantern when a keeper collects it. |
 | `MapInteraction.swift` | What the player is doing right now (browsing, placing, moving) and what's selected. Shared by the map and the HUD. |
-| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in buildings (shaped differently per kind), tiles and resident portraits. Also small colour helpers. |
+| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in buildings (shaped differently per kind and stage), decorations (by their `shape`), tiles and resident portraits. Also small colour helpers. |
 
 ### `Fenlight/UI`: buttons and panels
 
@@ -153,7 +162,7 @@ decides draw order so buildings lower on the screen draw in front.
 |------|--------------|
 | `Theme.swift` | UI colours (including rarity colours), fonts, the panel style (`fenPanel()`), button style, coin and wisp icons. Uses `ui.panel` / `ui.button` art when it exists. |
 | `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
-| `Panels.swift` | `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `Panels.swift` | `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
 | `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
 | `ResidentsView.swift` | The Townsfolk screen (everyone in town, where they work, who's on the way), resident `Portrait`s, and the `ArrivalCard`. |
 | `Haptics.swift` | Small vibrations on collect, build and arrivals. |
@@ -170,6 +179,7 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `DecorationTests.swift` | Checks for footprint distance, aura reach and stacking, the cap, paths, paying out before a change, moving, putting away and costs. |
 | `StageQuestTests.swift` | Checks for stages and renovation (requirements, paying out, closing and reopening, finishing while away, finish-now, house beds), quests (starting, progress, claiming, follow-ups, the three-quest limit), and that every id referenced in the shipped JSON exists. |
 | `ResidentTests.swift` | Checks for arrivals (story, wanderers, while away), summoning (odds, repeatability, duplicates), worker bonuses, auto-collect and the offline cap, wisps, and loading version 1 saves. |
 
@@ -242,6 +252,8 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 |------------|-------|
 | Add or rebalance a building, or its stages | `Fenlight/Content/buildings.json` |
 | Add a quest | `Fenlight/Content/quests.json` |
+| Add a decoration or change its aura | `Fenlight/Content/buildings.json` (`kind: "decoration"`, `aura`, `shape`) |
+| Change how far decoration bonuses can stack | `maxDecorationBonus` in `Economy.swift` |
 | Add a new kind of requirement or quest objective | `Requirement` / `Objective` in `Content.swift`, then `Requirements.swift` / `Quests.swift` |
 | Add a resident | `Fenlight/Content/residents.json` |
 | Change how fast things grow or cost | `Fenlight/Model/Economy.swift` |
