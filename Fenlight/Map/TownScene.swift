@@ -58,7 +58,7 @@ final class TownScene: SKScene {
         didSetUp = true
         camera = cam
         addChild(cam)
-        cam.position = IsoMath.center(of: Tile(c: 12, r: 12))
+        cam.position = IsoMath.center(of: World.startingCenter)
         cam.setScale(1.1)
 
         groundLayer.zPosition = 0
@@ -121,6 +121,7 @@ final class TownScene: SKScene {
             refreshBubbles()
         }
         townsfolk.update(currentTime)
+        updateWisp(currentTime)
         townsfolk.setSelected(ui.selectedResidentId)
         if currentTime - lastTick > 1 {
             lastTick = currentTime
@@ -176,7 +177,8 @@ final class TownScene: SKScene {
     private func refreshBubbles() {
         for b in game.state.buildings {
             guard let node = buildingNodes[b.id] else { continue }
-            node.showPending(game.pending(b), capacity: game.capacity(b), full: game.isFull(b))
+            let produces = game.cycle(b) > 0 && !game.isAuto(b) && !b.isRenovating
+            node.showRun(ready: produces ? game.isReady(b) : nil, payout: game.payout(b), progress: game.runProgress(b))
             node.showRenovation(remaining: game.renovationRemaining(b))
         }
     }
@@ -295,6 +297,11 @@ final class TownScene: SKScene {
                 ui.ghostOrigin = World.origin(centeredOn: tile, size: def.size)
             }
         case .browse:
+            if let wisp = wispNode, wisp.calculateAccumulatedFrame().insetBy(dx: -30, dy: -30).contains(point),
+               let amount = game.catchWisp() {
+                catchWispAnimation(wisp, amount: amount)
+                return
+            }
             // Collecting wins over everything; then people; then buildings; then murk.
             let hitBuilding = buildingHit(at: point, tile: tile)
             if let id = hitBuilding, let node = buildingNodes[id] {
@@ -321,6 +328,84 @@ final class TownScene: SKScene {
                 ui.clearSelection()
             }
         }
+    }
+
+    // MARK: - Lost wisps
+
+    private var wispNode: SKNode?
+
+    /// Shows a lost wisp drifting slowly between spots over the cleansed land while one is out, and
+    /// fades it when its time is up.
+    private func updateWisp(_ currentTime: TimeInterval) {
+        if game.wispVisible, wispNode == nil {
+            let node = makeWispNode()
+            node.position = randomWispSpot()
+            node.alpha = 0
+            node.run(.fadeIn(withDuration: 0.8))
+            overlayLayer.addChild(node)
+            wispNode = node
+            driftWisp(node)
+        } else if !game.wispVisible, let node = wispNode {
+            wispNode = nil
+            node.run(.sequence([.fadeOut(withDuration: 0.8), .removeFromParent()]))
+        }
+    }
+
+    private func makeWispNode() -> SKNode {
+        let node = SKNode()
+        node.zPosition = 20
+        if UIImage(named: "fx.wisp") != nil {
+            node.addChild(SKSpriteNode(texture: SKTexture(imageNamed: "fx.wisp")))
+        } else {
+            let halo = SKShapeNode(circleOfRadius: 22)
+            halo.fillColor = UIColor(hex: "#7FE3D6").withAlphaComponent(0.25)
+            halo.strokeColor = .clear
+            halo.glowWidth = 10
+            let core = SKShapeNode(circleOfRadius: 9)
+            core.fillColor = .white
+            core.strokeColor = UIColor(hex: "#7FE3D6")
+            core.lineWidth = 3
+            core.glowWidth = 6
+            node.addChild(halo)
+            node.addChild(core)
+            halo.run(.repeatForever(.sequence([.scale(to: 1.25, duration: 0.9), .scale(to: 1, duration: 0.9)])))
+        }
+        node.run(.repeatForever(.sequence([.moveBy(x: 0, y: 10, duration: 1.1), .moveBy(x: 0, y: -10, duration: 1.1)])))
+        return node
+    }
+
+    /// A point floating a little above a random cleansed tile.
+    private func randomWispSpot() -> CGPoint {
+        let tiles = tileNodes.keys.filter(game.isCleansed)
+        let tile = tiles.randomElement() ?? World.startingCenter
+        let p = IsoMath.center(of: tile)
+        return CGPoint(x: p.x, y: p.y + 70)
+    }
+
+    private func driftWisp(_ node: SKNode) {
+        let target = randomWispSpot()
+        let distance = hypot(target.x - node.position.x, target.y - node.position.y)
+        let move = SKAction.move(to: target, duration: max(2, TimeInterval(distance / 40)))
+        move.timingMode = .easeInEaseOut
+        node.run(.sequence([move, .run { [weak self, weak node] in
+            guard let self, let node, node === self.wispNode else { return }
+            self.driftWisp(node)
+        }]), withKey: "drift")
+    }
+
+    private func catchWispAnimation(_ node: SKNode, amount: Double) {
+        wispNode = nil
+        node.removeAction(forKey: "drift")
+        node.run(.sequence([.group([.scale(to: 2, duration: 0.3), .fadeOut(withDuration: 0.3)]), .removeFromParent()]))
+        let label = SKLabelNode(fontNamed: "AvenirNext-Heavy")
+        label.text = "+\(Int(amount)) wisp\(amount == 1 ? "" : "s")"
+        label.fontSize = 22
+        label.fontColor = UIColor(hex: "#7FE3D6")
+        label.position = node.position
+        label.zPosition = 21
+        overlayLayer.addChild(label)
+        label.run(.sequence([.group([.moveBy(x: 0, y: 60, duration: 1), .fadeOut(withDuration: 1)]), .removeFromParent()]))
+        Haptics.celebrate()
     }
 
     /// The building under a tap: first whatever stands on the tapped tile, then the frontmost sprite.

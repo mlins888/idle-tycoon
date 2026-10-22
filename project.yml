@@ -40,12 +40,26 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
 
+  FenlightUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: FenlightUITests
+    dependencies:
+      - target: Fenlight
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Fenlight
+
 schemes:
   Fenlight:
     build:
       targets:
         Fenlight: all
         FenlightTests: [test]
+        FenlightUITests: [test]
     test:
       targets:
         - FenlightTests
+        - FenlightUITests

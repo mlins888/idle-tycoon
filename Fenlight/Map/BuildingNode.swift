@@ -12,6 +12,9 @@ final class BuildingNode: SKNode {
     private var shownFull = false
     private let badges = SKNode()
     private let keeperLantern = SKShapeNode(circleOfRadius: 8)
+    private let runBar = SKNode()
+    private let runFill = SKShapeNode()
+    private var shownProgress = -1.0
     private let scaffold = SKNode()
     private let scaffoldLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
     private var shownTexture: SKTexture?
@@ -66,8 +69,40 @@ final class BuildingNode: SKNode {
         scaffoldLabel.fontColor = UIColor(hex: "#FFF8E6")
         scaffoldLabel.verticalAlignmentMode = .center
 
+        let track = SKShapeNode(rect: CGRect(x: -26, y: -4, width: 52, height: 8), cornerRadius: 4)
+        track.fillColor = UIColor(hex: "#1D1A24").withAlphaComponent(0.7)
+        track.strokeColor = UIColor(hex: "#FFF8E6").withAlphaComponent(0.6)
+        track.lineWidth = 1
+        runBar.addChild(track)
+        runFill.fillColor = UIColor(hex: "#F2B544")
+        runFill.strokeColor = .clear
+        runBar.addChild(runFill)
+        runBar.zPosition = 1
+        runBar.isHidden = true
+        addChild(runBar)
+
         shownTexture = texture
         layoutAroundSprite()
+    }
+
+    /// While a shop is working: a thin progress bar. When its run is done: the glimmer bubble.
+    /// Pass nil for buildings that don't produce (or are collected by a keeper).
+    func showRun(ready: Bool?, payout: Double, progress: Double) {
+        guard let ready else {
+            bubble.isHidden = true
+            runBar.isHidden = true
+            return
+        }
+        runBar.isHidden = ready
+        if !ready {
+            let p = (progress * 50).rounded() / 50
+            if p != shownProgress {
+                shownProgress = p
+                runFill.path = CGPath(roundedRect: CGRect(x: -25, y: -3, width: max(6, 50 * p), height: 6),
+                                      cornerWidth: 3, cornerHeight: 3, transform: nil)
+            }
+        }
+        showPending(ready ? payout : 0, capacity: payout, full: ready)
     }
 
     /// Swaps the picture (e.g. when a building reaches a new stage) and moves the bubble and badges to fit.
@@ -86,6 +121,7 @@ final class BuildingNode: SKNode {
         bubble.position = CGPoint(x: 0, y: h + 14)
         badges.position = CGPoint(x: -w * 0.3, y: h * 0.55)
         keeperLantern.position = CGPoint(x: 0, y: h + 12)
+        runBar.position = CGPoint(x: 0, y: h + 12)
         buildScaffold(width: w, height: h)
     }
 
@@ -147,9 +183,9 @@ final class BuildingNode: SKNode {
 
     required init?(coder: NSCoder) { fatalError("not used") }
 
-    /// The bubble appears once a shop is at least a tenth full, and bobs when it's completely full.
-    func showPending(_ amount: Double, capacity: Double, full: Bool) {
-        let visible = amount >= max(1, capacity * 0.1)
+    /// The bubble with an amount; it bobs when `full`.
+    private func showPending(_ amount: Double, capacity: Double, full: Bool) {
+        let visible = amount >= 1
         bubble.isHidden = !visible
         guard visible else { return }
 

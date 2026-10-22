@@ -38,16 +38,33 @@ now (browsing, placing a building, moving one) and what's selected.
 
 ## Key ideas
 
-### Earnings use timestamps, not timers
+### Shops work in production runs
 
-Shops don't count up every second. Each placed building remembers **when it was last collected**
-(`lastCollectedAt`). Whenever the game needs to know what a shop holds, it calculates:
+Each shop stage has a **production time** (`cycleSeconds`) and a **payout**. A shop is either
+*working* (a progress bar shows over it) or *ready* (a bubble shows the payout). You can only collect
+when a run has finished, and a finished batch waits for you; batches don't stack up. Collecting pays
+the batch and starts the next run. The first shop pays 5 glimmer a minute; later shops take longer
+and pay far more (see the table in `buildings.json`).
 
-> waiting = min(capacity, rate × seconds since last collected)
+Runs are worked out from timestamps, not timers: each shop remembers when its current run started
+(`lastCollectedAt`), and "ready" just means `now − start ≥ cycle`. So time passing while the app is
+closed needs no background work. **Keepers** collect every whole run that finished
+(`Economy.runsCompleted`), up to 8 hours while you're away. Worker and decoration bonuses raise the
+payout.
 
-This makes offline earnings free. Close the app for three hours and the same formula gives the right
-answer when you reopen it, with no background processing. Collecting resets `lastCollectedAt` to now.
-The formulas are in `Economy.swift`.
+### One of each business
+
+A town can have one of each kind of shop, plus a second once the first reaches its final stage
+(`Game.canBuildMore`). The second costs 3× as much. Homes and decorations have no limit. A new town
+starts on a single 4×4 patch, so each patch of murk you cleanse matters.
+
+### Wisps
+
+Wisps are scarce. About every 30–60 minutes a lost wisp drifts over town for 90 seconds; tap it to
+catch it (`Game.catchWisp`). The schedule is saved (`nextWispAt`, `wispVisibleUntil`), so restarting
+the app doesn't reroll it. Wisps also come from cleansing, levelling up and some quest and festival
+rewards. Every gain shows a toast ("+3 wisps · cleansed the murk"), and tapping the wisp counter
+explains where wisps come from and what they're for.
 
 ### One clock
 
@@ -106,7 +123,8 @@ game, with folk you haven't met shown as silhouettes and a hint about how to mee
 Four festivals (`events.json`) run on the same dates every year, so no server is needed: Bloom
 Festival (spring), Midsummer Fireflies, Hollow Moon (autumn) and Midwinter Lights. `EventCalendar`
 works out which one is running from the phone's date (a window can wrap past New Year). During a
-festival, collecting from a shop that's at least a quarter full earns 1 festival token. Token
+festival, collecting by hand earns festival tokens: 1 per 5 minutes of production collected, so a
+1-hour shop earns 12 per collect and the 1-minute stall earns a fifth of one. Token
 milestones give wisps and glimmer, unlock festival-only decorations (`eventOnly`, buildable forever
 once unlocked) and invite a festival resident (arrival `event`), who moves in when there's a bed.
 Progress starts over when the festival comes round the next year.
@@ -151,7 +169,7 @@ decides draw order so buildings lower on the screen draw in front.
 | `GameState.swift` | Everything that gets saved: glimmer, wisps, XP, placed buildings (`PlacedBuilding`, with their stage and any renovation in progress), cleansed chunks, residents (`Resident`), when the next wanderer arrives, the random generator's state, lifetime counters for quests (`Stats`), active and finished quests. `newGame()` sets up a fresh town. Decodes older saves by filling in defaults for newer fields. |
 | `Residents.swift` | Rules about residents as plain functions: beds, who's waiting for a bed, who can wander in next, summon odds and the summon roll. |
 | `SeededRandom.swift` | A small repeatable random generator. Its state is saved, so summons can't be re-rolled by restarting the app. |
-| `Economy.swift` | Game-wide balance formulas: worker bonuses, the decoration bonus cap, the refund for putting a decoration away, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
+| `Economy.swift` | Game-wide balance formulas: payouts, when a run is ready, how many runs a keeper collects, worker bonuses, the decoration bonus cap, the refund for putting a decoration away, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
 | `Requirements.swift` | Checks a requirement (town level, a building at a stage, a resident, a finished quest, % restored) and describes it in plain words. Used by building stages and quests. |
 | `EventCalendar.swift` | Festival dates: which festival is running at a given moment, its start and end, and the next one to come. |
 | `Quests.swift` | Quest rules as plain functions: which quests can start, the counter value to remember when one starts, and how far along an objective is. |
@@ -172,8 +190,8 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `IsoMath.swift` | Tile ↔ screen conversions, where a building's picture is anchored, draw order, and outline shapes for footprints and chunks. |
-| `TownScene.swift` | The SpriteKit scene. Hosts the walking residents (`TownsfolkLayer`). Outlines a decoration's aura while placing it or when it's selected. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
-| `BuildingNode.swift` | One building on the map: its picture, the glimmer bubble above it (which bobs when full), coloured dots for its workers, and a glowing lantern when a keeper collects it. |
+| `TownScene.swift` | The SpriteKit scene. Shows the drifting lost wisp and handles catching it. Hosts the walking residents (`TownsfolkLayer`). Outlines a decoration's aura while placing it or when it's selected. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
+| `BuildingNode.swift` | One building on the map: its picture, a progress bar while its run is going, the glimmer bubble above it (which bobs when full), coloured dots for its workers, and a glowing lantern when a keeper collects it. |
 | `Walkways.swift` | Where residents can walk (cleansed land without buildings, plus paths), routes around buildings, nearby spots, and the nearest free tile. Plain functions, unit-tested. |
 | `TownsfolkLayer.swift` | Residents walking around the map: picks where each one goes next, moves them along their route, keeps their draw order right, shows speech bubbles, and finds who was tapped. `ResidentNode` is one walking resident. |
 | `MapInteraction.swift` | What the player is doing right now (browsing, placing, moving) and what's selected (a building, a murk chunk or a resident). Shared by the map and the HUD. |
@@ -185,8 +203,9 @@ decides draw order so buildings lower on the screen draw in front.
 |------|--------------|
 | `Theme.swift` | UI colours (including rarity colours), fonts, the panel style (`fenPanel()`), button style, coin and wisp icons. Uses `ui.panel` / `ui.button` art when it exists. |
 | `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
-| `Panels.swift` | `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `Panels.swift` | `BuildMenu` (tabs: Shops, Homes, Decor, Special, with the reason anything is locked), `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
 | `EventView.swift` | The festival banner under the top bar and the festival reward track sheet. |
+| `WispInfoView.swift` | `ToastView` (the short "+3 wisps · …" messages) and the sheet explaining wisps. |
 | `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
 | `ResidentPanel.swift` | `ResidentPanel` (shown when you tap someone on the map, with a job picker) and `RegistryGrid` (everyone in the game, with hints for folk you haven't met). |
 | `ResidentsView.swift` | The Townsfolk screen with In town (everyone here, where they work, who's on the way) and Registry tabs, resident `Portrait`s, and the `ArrivalCard`. |
@@ -205,6 +224,9 @@ decides draw order so buildings lower on the screen draw in front.
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
 | `EventTests.swift` | Checks for festival dates (including wrapping past New Year), earning tokens, milestone rewards, festival residents, progress resetting each year, loading version 3 saves, and that the shipped festivals are consistent and don't overlap. |
+| `BalanceTests.swift` | Checks for the one-of-each rule, keepers collecting whole runs, lost wisps (schedule, catching, fading, surviving a restart), wisp toasts, and Registry sorting. |
+| `TestSupport.swift` | Shared test helpers: a shop definition builder, and the roomier 8×8 layout many tests use. |
+| `FenlightUITests/FenlightUITests.swift` | Launches the real app from a fresh town and taps through the Build tabs, Townsfolk and Registry, quests, the wisp info and the festival banner, failing if anything crashes or hangs. |
 | `WalkwayTests.swift` | Checks for walkable land, walking on paths, routes around buildings, unreachable spots, and that every resident has something to say. |
 | `DecorationTests.swift` | Checks for footprint distance, aura reach and stacking, the cap, paths, paying out before a change, moving, putting away and costs. |
 | `StageQuestTests.swift` | Checks for stages and renovation (requirements, paying out, closing and reopening, finishing while away, finish-now, house beds), quests (starting, progress, claiming, follow-ups, the three-quest limit), and that every id referenced in the shipped JSON exists. |
@@ -282,6 +304,8 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 | Add or change a festival | `Fenlight/Content/events.json`, plus any `eventOnly` decorations in `buildings.json` and `event` residents in `residents.json` |
 | Add a decoration or change its aura | `Fenlight/Content/buildings.json` (`kind: "decoration"`, `aura`, `shape`) |
 | Change how far decoration bonuses can stack | `maxDecorationBonus` in `Economy.swift` |
+| Change how often lost wisps appear | `wispDelay` / `wispVisibleFor` in `Economy.swift` |
+| Change the starting land | `startingChunks` / `startingCenter` in `World.swift`, and `GameState.newGame` |
 | Add a new kind of requirement or quest objective | `Requirement` / `Objective` in `Content.swift`, then `Requirements.swift` / `Quests.swift` |
 | Add a resident, or what they say | `Fenlight/Content/residents.json` (`chatter`) |
 | Change how residents wander | `TownsfolkLayer.swift` (walk speed, wait times, how often they visit other shops or talk) |

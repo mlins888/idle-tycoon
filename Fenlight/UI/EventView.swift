@@ -70,7 +70,7 @@ struct EventView: View {
                     }
                     .padding(.top, 20)
 
-                    Text("Collect from a shop that's at least a quarter full to earn 1 \(event.token). Keepers don't earn \(event.tokens), so check in by hand.")
+                    Text("Collecting from your shops by hand earns \(event.tokens): 1 for every 5 minutes of production you collect, so longer runs earn more. Keepers don't earn \(event.tokens).")
                         .font(Theme.body(13))
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)

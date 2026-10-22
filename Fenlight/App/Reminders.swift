@@ -1,6 +1,6 @@
 import UserNotifications
 
-/// Local notifications: "your shop is full" and "renovation finished". Scheduled when the app goes
+/// Local notifications: "your shop is ready" and "renovation finished". Scheduled when the app goes
 /// to the background, cancelled when it comes back. No server involved.
 @MainActor
 enum Reminders {
@@ -33,10 +33,10 @@ enum Reminders {
     static func scheduleShopFull(_ game: Game) {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [id])
-        guard let next = game.nextShopFull() else { return }
+        guard let next = game.nextShopReady() else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Your \(next.name) is full"
-        content.body = "Its glimmer has stopped piling up. Come collect it before the gloom creeps back."
+        content.title = "Your \(next.name) is ready"
+        content.body = "A batch is done and waiting. Come collect it so the next one can start."
         content.sound = .default
         let delay = max(60, next.date.timeIntervalSince(game.now))
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)

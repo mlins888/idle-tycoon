@@ -26,8 +26,7 @@ private let winter = EventDef(
 
 private let content = GameContent(
     buildings: [
-        BuildingDef(id: "reed_candles", kind: .shop, size: 1, cost: 25, unlockLevel: 1, xp: 5, color: "#FFFFFF",
-                    stages: [StageDef(name: "Stall", blurb: "", rate: 1, capSeconds: 100)]),
+        testShopDef("reed_candles", cost: 25, cycle: 300, payout: 5),
         BuildingDef(id: "reed_cottage", kind: .house, size: 1, cost: 40, unlockLevel: 1, xp: 5, color: "#FFFFFF",
                     stages: [StageDef(name: "Cottage", blurb: "", beds: 1)]),
         BuildingDef(id: "gourd", kind: .decoration, size: 1, cost: 10, unlockLevel: 1, xp: 1, color: "#FFFFFF",
@@ -47,7 +46,7 @@ private final class TestTime {
     func advance(_ s: TimeInterval) { date = date.addingTimeInterval(s) }
 }
 
-/// The starting Rushlight Stall (fills 100 glimmer in 100 seconds).
+/// The starting Rushlight Stall (a 5-minute run, so each collect earns 1 token).
 private let stall = 1
 
 final class EventCalendarTests: XCTestCase {
@@ -81,6 +80,7 @@ final class EventProgressTests: XCTestCase {
     private func makeGame(_ time: TestTime) -> Game {
         var state = GameState.newGame(now: time.date)
         state.glimmer = 10_000
+        useRoomyTestLayout(&state)
         return Game(content: content, state: state, clock: time.clock)
     }
 
@@ -95,25 +95,25 @@ final class EventProgressTests: XCTestCase {
         XCTAssertEqual(game.announcements.filter { $0.id == "event-autumn" }.count, 1)
     }
 
-    func testTokensOnlyForShopsAtLeastAQuarterFull() {
+    func testTokensComeFromProductionCollected() {
         let time = TestTime(date(2026, 10, 22))
         let game = makeGame(time)
-        time.advance(10)   // 10% full
+        time.advance(100)
         game.collect(stall)
-        XCTAssertEqual(game.eventProgress(autumn).tokens, 0)
-        time.advance(30)   // 30% full
+        XCTAssertEqual(game.eventProgress(autumn).tokens, 0, "not ready, nothing collected")
+        time.advance(200)
         game.collect(stall)
-        XCTAssertEqual(game.eventProgress(autumn).tokens, 1)
-        time.advance(30)
+        XCTAssertEqual(game.eventProgress(autumn).tokens, 1, accuracy: 0.0001, "5 minutes of production")
+        time.advance(300)
         game.collectAll()
-        XCTAssertEqual(game.eventProgress(autumn).tokens, 2)
+        XCTAssertEqual(game.eventProgress(autumn).tokens, 2, accuracy: 0.0001)
     }
 
     func testNoTokensOutsideAFestival() {
         let time = TestTime(date(2026, 8, 1))
         let game = makeGame(time)
         XCTAssertNil(game.activeEvent)
-        time.advance(100)
+        time.advance(300)
         game.collect(stall)
         XCTAssertTrue(game.state.eventProgress.isEmpty)
     }
@@ -138,6 +138,7 @@ final class EventProgressTests: XCTestCase {
         let time = TestTime(date(2026, 10, 22))
         var state = GameState.newGame(now: time.date)
         state.glimmer = 10_000
+        useRoomyTestLayout(&state)
         state.buildings.removeAll { $0.defId == "reed_cottage" }
         let game = Game(content: content, state: state, clock: time.clock)
 

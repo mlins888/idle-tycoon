@@ -2,12 +2,10 @@ import XCTest
 @testable import Fenlight
 
 private let content = GameContent(buildings: [
-    BuildingDef(id: "reed_candles", kind: .shop, size: 1, cost: 25, unlockLevel: 1, xp: 5, color: "#FFFFFF",
-                stages: [StageDef(name: "Stall", blurb: "", rate: 1, capSeconds: 100)]),
+    testShopDef("reed_candles", cost: 25),
     BuildingDef(id: "reed_cottage", kind: .house, size: 1, cost: 40, unlockLevel: 1, xp: 5, color: "#FFFFFF",
                 stages: [StageDef(name: "Cottage", blurb: "", beds: 1)]),
-    BuildingDef(id: "big", kind: .shop, size: 3, cost: 1, unlockLevel: 1, xp: 1, color: "#FFFFFF",
-                stages: [StageDef(name: "Big", blurb: "", rate: 1, capSeconds: 1)]),
+    testShopDef("big", size: 3, cost: 1),
     BuildingDef(id: "boardwalk", kind: .decoration, size: 1, cost: 1, unlockLevel: 1, xp: 1, color: "#FFFFFF",
                 stages: [StageDef(name: "Boardwalk", blurb: "")], shape: "path"),
 ])
@@ -15,6 +13,7 @@ private let content = GameContent(buildings: [
 final class WalkwayTests: XCTestCase {
     private func state(_ extra: [PlacedBuilding] = []) -> GameState {
         var s = GameState.newGame(now: Date())
+        useRoomyTestLayout(&s)
         s.buildings += extra
         return s
     }

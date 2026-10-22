@@ -1,16 +1,10 @@
 import XCTest
 @testable import Fenlight
 
-/// A small fixed set of buildings so tests don't depend on balance changes in buildings.json.
-private func testShop(_ id: String, size: Int, cost: Double, unlock: Int, rate: Double, cap: Double) -> BuildingDef {
-    BuildingDef(id: id, kind: .shop, size: size, cost: cost, unlockLevel: unlock, xp: 5, color: "#FFFFFF",
-                stages: [StageDef(name: id, blurb: "", rate: rate, capSeconds: cap)])
-}
-
 private let testContent = GameContent(buildings: [
-    testShop("reed_candles", size: 1, cost: 25, unlock: 1, rate: 1, cap: 100),
-    testShop("bakery", size: 2, cost: 100, unlock: 1, rate: 2, cap: 50),
-    testShop("inn", size: 3, cost: 10, unlock: 5, rate: 5, cap: 50),
+    testShopDef("reed_candles", cost: 25, cycle: 60, payout: 5),
+    testShopDef("bakery", size: 2, cost: 100, cycle: 180, payout: 30),
+    testShopDef("inn", size: 3, cost: 10, unlock: 5, cycle: 60, payout: 5),
 ])
 
 /// A clock the test controls.
@@ -24,61 +18,81 @@ private final class TestTime {
 private func makeGame(time: TestTime, glimmer: Double = 1_000) -> Game {
     var state = GameState.newGame(now: time.date)
     state.glimmer = glimmer
+    useRoomyTestLayout(&state)
     return Game(content: testContent, state: state, clock: time.clock)
 }
 
+/// The starting Rushlight Stall: 5 glimmer every minute here.
+private let stall = 1
+
 @MainActor
 final class EconomyTests: XCTestCase {
-    func testEarningsGrowWithTimeAndStopAtCapacity() {
+    func testNothingToCollectUntilTheRunFinishes() {
         let time = TestTime()
         let game = makeGame(time: time)
-        let stall = game.state.buildings[0]
-
-        XCTAssertEqual(game.pending(stall), 0)
-        time.advance(30)
-        XCTAssertEqual(game.pending(stall), 30, accuracy: 0.001)
-        time.advance(1_000)
-        XCTAssertEqual(game.pending(stall), 100, accuracy: 0.001, "should stop at capSeconds × rate")
-        XCTAssertTrue(game.isFull(stall))
+        time.advance(59)
+        XCTAssertFalse(game.isReady(game.building(id: stall)!))
+        XCTAssertEqual(game.pending(game.building(id: stall)!), 0)
+        XCTAssertEqual(game.collect(stall), 0, "can't collect a half-done run")
+        XCTAssertEqual(game.timeLeft(game.building(id: stall)!), 1, accuracy: 0.001)
+        time.advance(1)
+        XCTAssertTrue(game.isReady(game.building(id: stall)!))
+        XCTAssertEqual(game.pending(game.building(id: stall)!), 5)
     }
 
-    func testCollectAddsGlimmerAndResetsTheShop() {
+    func testReadyBatchesDontStackUp() {
+        let time = TestTime()
+        let game = makeGame(time: time)
+        time.advance(60 * 10)
+        XCTAssertEqual(game.pending(game.building(id: stall)!), 5, "one batch waits; ten minutes away isn't ten batches")
+    }
+
+    func testCollectPaysTheBatchAndStartsTheNextRun() {
         let time = TestTime()
         let game = makeGame(time: time, glimmer: 0)
-        time.advance(40)
-
-        XCTAssertEqual(game.collect(1), 40, accuracy: 0.001)
-        XCTAssertEqual(game.state.glimmer, 40, accuracy: 0.001)
-        XCTAssertEqual(game.pending(game.state.buildings[0]), 0)
+        time.advance(60)
+        XCTAssertEqual(game.collect(stall), 5)
+        XCTAssertEqual(game.state.glimmer, 5)
+        XCTAssertFalse(game.isReady(game.building(id: stall)!))
+        XCTAssertEqual(game.timeLeft(game.building(id: stall)!), 60, accuracy: 0.001)
     }
 
-    func testCollectAllGathersEveryShop() {
+    func testCollectAllGathersEveryReadyShop() {
         let time = TestTime()
         let game = makeGame(time: time, glimmer: 100)
         XCTAssertTrue(game.build("bakery", at: Tile(c: 13, r: 13)))
         XCTAssertEqual(game.state.glimmer, 0)
 
-        time.advance(10)   // stall: 10, bakery: 20
-        XCTAssertEqual(game.collectAll(), 30, accuracy: 0.001)
+        time.advance(60)
+        XCTAssertEqual(game.collectAll(), 5, "only the stall is ready")
+        time.advance(120)
+        XCTAssertEqual(game.collectAll(), 35, "stall again, and the bakery's first batch")
         XCTAssertEqual(game.totalPending(), 0)
     }
 
     func testOfflineEarningsShowAWelcomeBackSummary() {
         let time = TestTime()
         var state = GameState.newGame(now: time.date)
+        useRoomyTestLayout(&state)
         state.savedAt = time.date
         time.advance(2 * 3600)
 
         let game = Game(content: testContent, state: state, clock: time.clock)
         let summary = try? XCTUnwrap(game.awaySummary)
         XCTAssertEqual(summary?.duration ?? 0, 7200, accuracy: 0.001)
-        XCTAssertEqual(summary?.waiting ?? 0, 100, accuracy: 0.001, "capped at the stall's capacity")
+        XCTAssertEqual(summary?.waiting ?? 0, 5, "one batch is ready")
     }
 
-    func testBuildingCostRisesWithEachCopy() {
+    func testSecondCopyOfAShopCostsThreeTimesAsMuch() {
         let def = testContent.building("reed_candles")!
         XCTAssertEqual(Economy.buildCost(def, owned: 0), 25)
-        XCTAssertGreaterThan(Economy.buildCost(def, owned: 1), 25)
+        XCTAssertEqual(Economy.buildCost(def, owned: 1), 75)
+    }
+
+    func testRunsCompletedCountsWholeRunsUpToTheCap() {
+        let start = Date(timeIntervalSinceReferenceDate: 0)
+        XCTAssertEqual(Economy.runsCompleted(since: start, cycle: 10, now: start.addingTimeInterval(25), cap: 100), 2)
+        XCTAssertEqual(Economy.runsCompleted(since: start, cycle: 10, now: start.addingTimeInterval(500), cap: 100), 10)
     }
 
     func testLevelsComeFromXP() {
@@ -96,6 +110,15 @@ final class EconomyTests: XCTestCase {
 
 @MainActor
 final class GridTests: XCTestCase {
+    func testANewTownStartsWithOneSixteenTilePatch() {
+        let state = GameState.newGame(now: Date())
+        XCTAssertEqual(state.cleansedChunks, World.startingChunks)
+        XCTAssertEqual(state.cleansedChunks.count * World.chunkSize * World.chunkSize, 16)
+        for b in state.buildings {
+            XCTAssertTrue(state.cleansedChunks.contains(World.chunk(of: b.origin)), "\(b.defId) starts on cleansed land")
+        }
+    }
+
     func testPlacementRejectsOverlap() {
         let time = TestTime()
         let game = makeGame(time: time)
@@ -131,7 +154,9 @@ final class GridTests: XCTestCase {
         XCTAssertTrue(game.canCleanse(Chunk(cx: 0, cy: 2)), "now adjacent")
     }
 
-    func testCleanseCostRises() {
+    func testCleanseCostStartsLowAndClimbs() {
+        XCTAssertEqual(Economy.cleanseCost(cleansedSoFar: 1), 100)
+        XCTAssertEqual(Economy.cleanseCost(cleansedSoFar: 2), 240)
         XCTAssertLessThan(Economy.cleanseCost(cleansedSoFar: 4), Economy.cleanseCost(cleansedSoFar: 5))
     }
 }
@@ -174,6 +199,7 @@ final class SaveTests: XCTestCase {
         var state = GameState.newGame(now: Date(timeIntervalSinceReferenceDate: 500))
         state.glimmer = 1234.5
         state.cleansedChunks.insert(Chunk(cx: 1, cy: 2))
+        state.nextWispAt = Date(timeIntervalSinceReferenceDate: 900)
         store.save(state)
 
         XCTAssertEqual(try XCTUnwrap(store.load()), state)
@@ -189,5 +215,17 @@ final class SaveTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         try Data("not json".utf8).write(to: url)
         XCTAssertNil(SaveStore(url: url).load())
+    }
+
+    func testVersionFourSavesLoadWithoutWispFields() throws {
+        var old = GameState.newGame(now: Date(timeIntervalSinceReferenceDate: 500))
+        old.version = 4
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+        json["nextWispAt"] = nil
+        json["wispVisibleUntil"] = nil
+        let loaded = try JSONDecoder().decode(GameState.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(loaded.nextWispAt)
+        XCTAssertNil(loaded.wispVisibleUntil)
+        XCTAssertEqual(loaded.buildings, old.buildings)
     }
 }

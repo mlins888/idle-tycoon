@@ -14,8 +14,8 @@
         "sells": [
           "Rushlights"
         ],
-        "rate": 0.5,
-        "capSeconds": 300
+        "cycleSeconds": 60,
+        "payout": 5
       },
       {
         "name": "Chandler's Shop",
@@ -24,10 +24,10 @@
           "Rushlights",
           "Beeswax tapers"
         ],
-        "rate": 1.5,
-        "capSeconds": 450,
         "cost": 150,
         "buildSeconds": 300,
+        "cycleSeconds": 60,
+        "payout": 15,
         "requirements": [
           {
             "type": "level",
@@ -47,10 +47,10 @@
           "Beeswax tapers",
           "Wisp-wick lanterns"
         ],
-        "rate": 4.5,
-        "capSeconds": 600,
-        "cost": 2500,
+        "cost": 1000,
         "buildSeconds": 3600,
+        "cycleSeconds": 60,
+        "payout": 45,
         "requirements": [
           {
             "type": "level",
@@ -73,7 +73,7 @@
     "id": "mossbread",
     "kind": "shop",
     "size": 2,
-    "cost": 150,
+    "cost": 60,
     "unlockLevel": 1,
     "xp": 15,
     "color": "#C9814B",
@@ -84,8 +84,8 @@
         "sells": [
           "Mossbread"
         ],
-        "rate": 2,
-        "capSeconds": 600
+        "cycleSeconds": 180,
+        "payout": 30
       },
       {
         "name": "Mossbread Bakery",
@@ -94,10 +94,10 @@
           "Mossbread",
           "Honey cakes"
         ],
-        "rate": 6,
-        "capSeconds": 900,
-        "cost": 900,
-        "buildSeconds": 900,
+        "cost": 360,
+        "buildSeconds": 600,
+        "cycleSeconds": 180,
+        "payout": 90,
         "requirements": [
           {
             "type": "level",
@@ -121,10 +121,10 @@
           "Honey cakes",
           "Bogberry tarts"
         ],
-        "rate": 18,
-        "capSeconds": 1200,
-        "cost": 12000,
-        "buildSeconds": 7200,
+        "cost": 2400,
+        "buildSeconds": 5400,
+        "cycleSeconds": 180,
+        "payout": 270,
         "requirements": [
           {
             "type": "level",
@@ -147,7 +147,7 @@
     "id": "eel_smoker",
     "kind": "shop",
     "size": 1,
-    "cost": 300,
+    "cost": 200,
     "unlockLevel": 2,
     "xp": 10,
     "color": "#8A7A5A",
@@ -158,8 +158,8 @@
         "sells": [
           "Smoked eel"
         ],
-        "rate": 3,
-        "capSeconds": 600
+        "cycleSeconds": 300,
+        "payout": 80
       },
       {
         "name": "Eel-Smoker's Jetty",
@@ -168,10 +168,10 @@
           "Smoked eel",
           "Eel pies"
         ],
-        "rate": 9,
-        "capSeconds": 900,
-        "cost": 1800,
-        "buildSeconds": 1200,
+        "cost": 1200,
+        "buildSeconds": 900,
+        "cycleSeconds": 300,
+        "payout": 240,
         "requirements": [
           {
             "type": "resident",
@@ -185,7 +185,7 @@
     "id": "toadstool_tea",
     "kind": "shop",
     "size": 2,
-    "cost": 600,
+    "cost": 500,
     "unlockLevel": 2,
     "xp": 30,
     "color": "#C8546B",
@@ -196,8 +196,8 @@
         "sells": [
           "Mushroom tea"
         ],
-        "rate": 6,
-        "capSeconds": 900
+        "cycleSeconds": 600,
+        "payout": 220
       },
       {
         "name": "Toadstool Teahouse",
@@ -206,10 +206,10 @@
           "Mushroom tea",
           "Reed biscuits"
         ],
-        "rate": 18,
-        "capSeconds": 1200,
         "cost": 3000,
-        "buildSeconds": 1800,
+        "buildSeconds": 1200,
+        "cycleSeconds": 600,
+        "payout": 660,
         "requirements": [
           {
             "type": "level",
@@ -233,10 +233,10 @@
           "Reed biscuits",
           "Rainwater cordials"
         ],
-        "rate": 54,
-        "capSeconds": 1800,
-        "cost": 40000,
-        "buildSeconds": 10800,
+        "cost": 20000,
+        "buildSeconds": 9000,
+        "cycleSeconds": 600,
+        "payout": 1980,
         "requirements": [
           {
             "type": "level",
@@ -254,7 +254,7 @@
     "id": "herb_garden",
     "kind": "shop",
     "size": 2,
-    "cost": 1200,
+    "cost": 1500,
     "unlockLevel": 3,
     "xp": 30,
     "color": "#5E8F4A",
@@ -266,8 +266,8 @@
           "Bogbean",
           "Sundew"
         ],
-        "rate": 9,
-        "capSeconds": 1800
+        "cycleSeconds": 1200,
+        "payout": 600
       },
       {
         "name": "Peat & Herb Garden",
@@ -277,10 +277,10 @@
           "Sundew",
           "Lantern mushrooms"
         ],
-        "rate": 27,
-        "capSeconds": 2400,
-        "cost": 7000,
+        "cost": 9000,
         "buildSeconds": 1800,
+        "cycleSeconds": 1200,
+        "payout": 1800,
         "requirements": [
           {
             "type": "resident",
@@ -298,8 +298,8 @@
     "id": "ferry_dock",
     "kind": "shop",
     "size": 2,
-    "cost": 2500,
-    "unlockLevel": 3,
+    "cost": 4000,
+    "unlockLevel": 4,
     "xp": 60,
     "color": "#4E8C7A",
     "stages": [
@@ -309,8 +309,8 @@
         "sells": [
           "Crossings"
         ],
-        "rate": 18,
-        "capSeconds": 1200
+        "cycleSeconds": 1800,
+        "payout": 1400
       },
       {
         "name": "Ferry Wharf",
@@ -319,10 +319,10 @@
           "Crossings",
           "Cargo runs"
         ],
-        "rate": 54,
-        "capSeconds": 1500,
-        "cost": 12000,
+        "cost": 24000,
         "buildSeconds": 2700,
+        "cycleSeconds": 1800,
+        "payout": 4200,
         "requirements": [
           {
             "type": "resident",
@@ -342,10 +342,10 @@
           "Cargo runs",
           "Moonlit tours"
         ],
-        "rate": 160,
-        "capSeconds": 2400,
-        "cost": 150000,
+        "cost": 160000,
         "buildSeconds": 14400,
+        "cycleSeconds": 1800,
+        "payout": 12600,
         "requirements": [
           {
             "type": "level",
@@ -363,8 +363,8 @@
     "id": "apothecary",
     "kind": "shop",
     "size": 2,
-    "cost": 9000,
-    "unlockLevel": 4,
+    "cost": 12000,
+    "unlockLevel": 5,
     "xp": 110,
     "color": "#7C5BA6",
     "stages": [
@@ -374,8 +374,8 @@
         "sells": [
           "Murk-cough tonic"
         ],
-        "rate": 50,
-        "capSeconds": 1800
+        "cycleSeconds": 3600,
+        "payout": 4000
       },
       {
         "name": "Bogbean Apothecary",
@@ -384,10 +384,10 @@
           "Tonics",
           "Poultices"
         ],
-        "rate": 150,
-        "capSeconds": 2400,
-        "cost": 40000,
+        "cost": 72000,
         "buildSeconds": 3600,
+        "cycleSeconds": 3600,
+        "payout": 12000,
         "requirements": [
           {
             "type": "resident",
@@ -408,10 +408,10 @@
           "Poultices",
           "Luck charms"
         ],
-        "rate": 450,
-        "capSeconds": 3600,
-        "cost": 500000,
-        "buildSeconds": 14400,
+        "cost": 480000,
+        "buildSeconds": 18000,
+        "cycleSeconds": 3600,
+        "payout": 36000,
         "requirements": [
           {
             "type": "level",
@@ -426,11 +426,73 @@
     ]
   },
   {
+    "id": "glassblower",
+    "kind": "shop",
+    "size": 2,
+    "cost": 30000,
+    "unlockLevel": 6,
+    "xp": 150,
+    "color": "#6FB7C8",
+    "stages": [
+      {
+        "name": "Bog-Glass Kiln",
+        "blurb": "Green glass from fen sand. Every bottle comes out a little wobbly.",
+        "sells": [
+          "Bottles"
+        ],
+        "cycleSeconds": 5400,
+        "payout": 9000
+      },
+      {
+        "name": "Will-o'-Glass Blower",
+        "blurb": "Glass jars that hold a wisp's glow for a week.",
+        "sells": [
+          "Bottles",
+          "Wisp jars"
+        ],
+        "cost": 180000,
+        "buildSeconds": 4500,
+        "cycleSeconds": 5400,
+        "payout": 27000,
+        "requirements": [
+          {
+            "type": "building",
+            "building": "lantern_works",
+            "stage": 1
+          }
+        ]
+      },
+      {
+        "name": "Starglass Atelier",
+        "blurb": "Stained windows for every house in Fenlight.",
+        "sells": [
+          "Bottles",
+          "Wisp jars",
+          "Stained windows"
+        ],
+        "cost": 1200000,
+        "buildSeconds": 21600,
+        "cycleSeconds": 5400,
+        "payout": 81000,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 9
+          },
+          {
+            "type": "resident",
+            "resident": "nettle_burr"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "lantern_works",
     "kind": "shop",
     "size": 2,
-    "cost": 35000,
-    "unlockLevel": 5,
+    "cost": 80000,
+    "unlockLevel": 7,
     "xp": 200,
     "color": "#F2C14E",
     "stages": [
@@ -440,8 +502,8 @@
         "sells": [
           "Mended lanterns"
         ],
-        "rate": 160,
-        "capSeconds": 2400
+        "cycleSeconds": 7200,
+        "payout": 18000
       },
       {
         "name": "Lantern Works",
@@ -450,10 +512,10 @@
           "Mended lanterns",
           "New lanterns"
         ],
-        "rate": 480,
-        "capSeconds": 3000,
-        "cost": 150000,
+        "cost": 480000,
         "buildSeconds": 5400,
+        "cycleSeconds": 7200,
+        "payout": 54000,
         "requirements": [
           {
             "type": "resident",
@@ -473,10 +535,10 @@
           "Street lamps",
           "Beacon parts"
         ],
-        "rate": 1450,
-        "capSeconds": 3600,
-        "cost": 2000000,
+        "cost": 3200000,
         "buildSeconds": 21600,
+        "cycleSeconds": 7200,
+        "payout": 162000,
         "requirements": [
           {
             "type": "level",
@@ -491,73 +553,11 @@
     ]
   },
   {
-    "id": "glassblower",
-    "kind": "shop",
-    "size": 2,
-    "cost": 15000,
-    "unlockLevel": 5,
-    "xp": 150,
-    "color": "#6FB7C8",
-    "stages": [
-      {
-        "name": "Bog-Glass Kiln",
-        "blurb": "Green glass from fen sand. Every bottle comes out a little wobbly.",
-        "sells": [
-          "Bottles"
-        ],
-        "rate": 90,
-        "capSeconds": 2400
-      },
-      {
-        "name": "Will-o'-Glass Blower",
-        "blurb": "Glass jars that hold a wisp's glow for a week.",
-        "sells": [
-          "Bottles",
-          "Wisp jars"
-        ],
-        "rate": 270,
-        "capSeconds": 3000,
-        "cost": 80000,
-        "buildSeconds": 3600,
-        "requirements": [
-          {
-            "type": "building",
-            "building": "lantern_works",
-            "stage": 1
-          }
-        ]
-      },
-      {
-        "name": "Starglass Atelier",
-        "blurb": "Stained windows for every house in Fenlight.",
-        "sells": [
-          "Bottles",
-          "Wisp jars",
-          "Stained windows"
-        ],
-        "rate": 810,
-        "capSeconds": 3600,
-        "cost": 900000,
-        "buildSeconds": 14400,
-        "requirements": [
-          {
-            "type": "level",
-            "level": 9
-          },
-          {
-            "type": "resident",
-            "resident": "nettle_burr"
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "bookbinder",
     "kind": "shop",
     "size": 1,
-    "cost": 60000,
-    "unlockLevel": 6,
+    "cost": 200000,
+    "unlockLevel": 8,
     "xp": 250,
     "color": "#8C6A4A",
     "stages": [
@@ -567,8 +567,8 @@
         "sells": [
           "Mended books"
         ],
-        "rate": 300,
-        "capSeconds": 3600
+        "cycleSeconds": 10800,
+        "payout": 40000
       },
       {
         "name": "Fen Archive",
@@ -577,10 +577,10 @@
           "Books",
           "Maps of the fen"
         ],
-        "rate": 900,
-        "capSeconds": 3600,
-        "cost": 350000,
-        "buildSeconds": 7200,
+        "cost": 1200000,
+        "buildSeconds": 6300,
+        "cycleSeconds": 10800,
+        "payout": 120000,
         "requirements": [
           {
             "type": "resident",
@@ -594,8 +594,8 @@
     "id": "mothsilk",
     "kind": "shop",
     "size": 2,
-    "cost": 120000,
-    "unlockLevel": 6,
+    "cost": 500000,
+    "unlockLevel": 9,
     "xp": 350,
     "color": "#B9A4D8",
     "stages": [
@@ -605,8 +605,8 @@
         "sells": [
           "Mothsilk thread"
         ],
-        "rate": 450,
-        "capSeconds": 3600
+        "cycleSeconds": 14400,
+        "payout": 80000
       },
       {
         "name": "Mothsilk Tailor",
@@ -616,10 +616,10 @@
           "Cloaks",
           "Gowns"
         ],
-        "rate": 1350,
-        "capSeconds": 3600,
-        "cost": 600000,
+        "cost": 3000000,
         "buildSeconds": 7200,
+        "cycleSeconds": 14400,
+        "payout": 240000,
         "requirements": [
           {
             "type": "resident",
@@ -633,8 +633,8 @@
     "id": "bellwater_inn",
     "kind": "shop",
     "size": 3,
-    "cost": 500000,
-    "unlockLevel": 8,
+    "cost": 1500000,
+    "unlockLevel": 10,
     "xp": 700,
     "color": "#5C7FB0",
     "stages": [
@@ -645,8 +645,8 @@
           "Cider",
           "Stew"
         ],
-        "rate": 1500,
-        "capSeconds": 3600
+        "cycleSeconds": 21600,
+        "payout": 200000
       },
       {
         "name": "Bellwater Inn",
@@ -656,10 +656,10 @@
           "Stew",
           "Rooms"
         ],
-        "rate": 4500,
-        "capSeconds": 3600,
-        "cost": 2500000,
-        "buildSeconds": 14400,
+        "cost": 9000000,
+        "buildSeconds": 7200,
+        "cycleSeconds": 21600,
+        "payout": 600000,
         "requirements": [
           {
             "type": "resident",
@@ -676,10 +676,10 @@
           "Rooms",
           "Feasts"
         ],
-        "rate": 13500,
-        "capSeconds": 5400,
-        "cost": 30000000,
+        "cost": 60000000,
         "buildSeconds": 28800,
+        "cycleSeconds": 21600,
+        "payout": 1800000,
         "requirements": [
           {
             "type": "level",

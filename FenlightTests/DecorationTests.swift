@@ -8,8 +8,7 @@ private func deco(_ id: String, size: Int = 1, radius: Int?, bonus: Double = 0) 
 }
 
 private let content = GameContent(buildings: [
-    BuildingDef(id: "reed_candles", kind: .shop, size: 1, cost: 25, unlockLevel: 1, xp: 5, color: "#FFFFFF",
-                stages: [StageDef(name: "Stall", blurb: "", rate: 1, capSeconds: 1000)]),
+    testShopDef("reed_candles", cost: 25, cycle: 10, payout: 100),
     BuildingDef(id: "reed_cottage", kind: .house, size: 1, cost: 40, unlockLevel: 1, xp: 5, color: "#FFFFFF",
                 stages: [StageDef(name: "Cottage", blurb: "", beds: 1)]),
     deco("lamp", radius: 1, bonus: 0.1),
@@ -28,6 +27,7 @@ private final class TestTime {
 private func makeGame(_ time: TestTime, glimmer: Double = 10_000) -> Game {
     var state = GameState.newGame(now: time.date)
     state.glimmer = glimmer
+    useRoomyTestLayout(&state)
     return Game(content: content, state: state, clock: time.clock)
 }
 
@@ -47,7 +47,7 @@ final class DecorationTests: XCTestCase {
         let game = makeGame(TestTime())
         XCTAssertTrue(game.build("lamp", at: Tile(c: 12, r: 11)))
         XCTAssertEqual(game.decorationBonus(game.building(id: stall)!), 0.1, accuracy: 0.0001)
-        XCTAssertEqual(game.rate(game.building(id: stall)!), 1.1, accuracy: 0.0001)
+        XCTAssertEqual(game.payout(game.building(id: stall)!), 110)
     }
 
     func testAuraRadiusLimitsReach() {
@@ -66,7 +66,7 @@ final class DecorationTests: XCTestCase {
         let shop = game.building(id: stall)!
         XCTAssertEqual(game.decorationBonusUncapped(shop), 0.7, accuracy: 0.0001)
         XCTAssertEqual(game.decorationBonus(shop), Economy.maxDecorationBonus)
-        XCTAssertEqual(game.rate(shop), 1.5, accuracy: 0.0001)
+        XCTAssertEqual(game.payout(shop), 150)
     }
 
     func testDecorationsDontBoostHouses() {
@@ -81,14 +81,13 @@ final class DecorationTests: XCTestCase {
         XCTAssertEqual(game.decorationBonus(game.building(id: stall)!), 0)
     }
 
-    func testPlacingADecorationPaysOutAtTheOldRateFirst() {
+    func testABonusAppliesToTheRunInProgress() {
         let time = TestTime()
         let game = makeGame(time, glimmer: 100)
-        time.advance(100)
+        time.advance(5)
         XCTAssertTrue(game.build("lamp", at: Tile(c: 12, r: 11)))
-        XCTAssertEqual(game.state.glimmer, 100 + 100 - 100, accuracy: 0.001, "100 earned at the old rate, minus the cost")
-        time.advance(10)
-        XCTAssertEqual(game.pending(game.building(id: stall)!), 11, accuracy: 0.001, "new rate from now on")
+        time.advance(5)
+        XCTAssertEqual(game.collect(stall), 110, "paid at the boosted amount when collected")
     }
 
     func testMovingADecorationChangesWhatItBoosts() {

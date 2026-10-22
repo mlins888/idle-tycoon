@@ -12,10 +12,16 @@ struct HUDView: View {
     @State private var showQuests = false
     @State private var showEvent = false
     @State private var showDebug = false
+    @State private var showWispInfo = false
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(game: game, onDebug: { showDebug = true })
+            TopBar(game: game, onDebug: { showDebug = true }, onWisps: { showWispInfo = true })
+            if let toast = game.toasts.first {
+                ToastView(toast: toast) { game.toasts.removeAll { $0.id == toast.id } }
+                    .padding(.top, 6)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
             if let event = game.activeEvent {
                 EventBanner(game: game, event: event) { showEvent = true }
                     .padding(.top, 6)
@@ -25,6 +31,12 @@ struct HUDView: View {
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
+        .animation(.spring(duration: 0.3), value: game.toasts.first)
+        .sheet(isPresented: $showWispInfo) {
+            WispInfoView(game: game)
+                .presentationDetents([.medium])
+                .presentationBackground(Theme.panel)
+        }
         .sheet(isPresented: $showBuildMenu) {
             BuildMenu(game: game) { defId in
                 showBuildMenu = false
@@ -89,6 +101,7 @@ struct HUDView: View {
 private struct TopBar: View {
     let game: Game
     var onDebug: () -> Void
+    var onWisps: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -101,13 +114,19 @@ private struct TopBar: View {
                         .contentTransition(.numericText())
                         .animation(.snappy, value: game.state.glimmer)
                 }
-                HStack(spacing: 6) {
-                    WispIcon(size: 16)
-                    Text("\(Int(game.state.wisps)) wisps")
-                        .font(Theme.body(13, weight: .semibold))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.wisp)
+                Button(action: onWisps) {
+                    HStack(spacing: 6) {
+                        WispIcon(size: 16)
+                        Text("\(Int(game.state.wisps)) wisps")
+                            .font(Theme.body(13, weight: .semibold))
+                            .monospacedDigit()
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(Theme.wisp)
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(Int(game.state.wisps)) wisps. About wisps")
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {

@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+/// A short message near the top of the screen, e.g. "+3 wisps · cleansed the murk".
+struct Toast: Identifiable, Equatable {
+    let id = UUID()
+    let text: String
+}
+
 struct AwaySummary: Identifiable {
     let id = UUID()
     let duration: TimeInterval
@@ -49,6 +55,8 @@ final class Game {
     var awaySummary: AwaySummary?
     /// Popups waiting to be shown (oldest first).
     var announcements: [Announcement] = []
+    /// Short messages waiting to be shown (oldest first).
+    var toasts: [Toast] = []
 
     @ObservationIgnored private let store: SaveStore?
     @ObservationIgnored private var lastSaved = Date.distantPast
@@ -122,9 +130,14 @@ final class Game {
         level >= def.unlockLevel && (!def.eventOnly || state.unlockedDecorations.contains(def.id))
     }
 
-    /// Unique buildings (the shrine and the guild) can only be built once.
+    /// Each business can be built once, plus a second once the first reaches its final stage.
+    /// Unique buildings (the shrine and the guild) only once. Homes and decorations have no limit.
     func canBuildMore(_ def: BuildingDef) -> Bool {
-        !def.unique || owned(def.id) == 0
+        let copies = state.buildings.filter { $0.defId == def.id }
+        if def.unique { return copies.isEmpty }
+        guard def.kind == .shop else { return true }
+        if copies.isEmpty { return true }
+        return copies.count == 1 && copies[0].stage >= def.stages.count && !copies[0].isRenovating
     }
 
     // MARK: - Reading: shops
@@ -133,10 +146,32 @@ final class Game {
         Residents.workers(at: shopId, in: state).compactMap { content.resident($0.defId) }
     }
 
-    /// Glimmer per second, including worker and decoration bonuses. Zero while renovating.
-    func rate(_ b: PlacedBuilding) -> Double {
+    /// Glimmer a shop pays per finished run, including worker and decoration bonuses. Zero while renovating.
+    func payout(_ b: PlacedBuilding) -> Double {
         guard let def = def(for: b), def.kind == .shop, !b.isRenovating else { return 0 }
-        return Economy.rate(def, stage: b.stage, workers: workers(at: b.id), decorationBonus: decorationBonus(b))
+        return Economy.payout(def, stage: b.stage, workers: workers(at: b.id), decorationBonus: decorationBonus(b))
+    }
+
+    /// How long one production run takes (0 for buildings that don't produce).
+    func cycle(_ b: PlacedBuilding) -> TimeInterval {
+        guard let def = def(for: b), def.kind == .shop else { return 0 }
+        return def.stage(b.stage).cycleSeconds
+    }
+
+    /// Whether the current production run has finished and is waiting to be collected.
+    func isReady(_ b: PlacedBuilding) -> Bool {
+        !b.isRenovating && Economy.isReady(since: b.lastCollectedAt, cycle: cycle(b), now: now)
+    }
+
+    /// Seconds until the current run finishes.
+    func timeLeft(_ b: PlacedBuilding) -> TimeInterval {
+        Economy.timeLeft(since: b.lastCollectedAt, cycle: cycle(b), now: now)
+    }
+
+    /// 0...1 through the current run.
+    func runProgress(_ b: PlacedBuilding) -> Double {
+        let c = cycle(b)
+        return c > 0 ? min(1, max(0, now.timeIntervalSince(b.lastCollectedAt) / c)) : 0
     }
 
     // MARK: - Reading: decorations
@@ -166,25 +201,16 @@ final class Game {
         return state.buildings.filter { $0.id != d.id && reaches(d, $0) }
     }
 
-    func capacity(_ b: PlacedBuilding) -> Double {
-        guard let stage = stageDef(b) else { return 0 }
-        return Economy.capacity(rate: rate(b), stage)
-    }
-
     /// True when a keeper collects this shop automatically (needs a charter and a worker).
     func isAuto(_ b: PlacedBuilding) -> Bool {
         b.autoCollect && !Residents.workers(at: b.id, in: state).isEmpty
     }
 
-    /// Glimmer waiting to be collected by hand. Always 0 for auto-collected or renovating shops.
+    /// Glimmer ready to collect by hand: the payout once a run has finished, otherwise 0.
+    /// Always 0 for auto-collected or renovating shops.
     func pending(_ b: PlacedBuilding) -> Double {
-        guard !isAuto(b), !b.isRenovating else { return 0 }
-        return Economy.pending(since: b.lastCollectedAt, rate: rate(b), capacity: capacity(b), now: now)
-    }
-
-    func isFull(_ b: PlacedBuilding) -> Bool {
-        let cap = capacity(b)
-        return cap > 0 && !isAuto(b) && pending(b) >= cap * 0.999
+        guard !isAuto(b), isReady(b) else { return 0 }
+        return payout(b)
     }
 
     func totalPending() -> Double {
@@ -196,16 +222,21 @@ final class Game {
         return Economy.charterCost(def)
     }
 
-    /// The soonest moment a hand-collected shop fills up, for the "shop is full" reminder.
-    func nextShopFull() -> (date: Date, name: String)? {
+    /// The soonest moment a hand-collected shop finishes its run, for the "shop is ready" reminder.
+    func nextShopReady() -> (date: Date, name: String)? {
         state.buildings.compactMap { b -> (Date, String)? in
-            guard !isAuto(b), !b.isRenovating else { return nil }
-            let r = rate(b), cap = capacity(b)
-            guard r > 0, cap > 0 else { return nil }
-            let fullAt = b.lastCollectedAt.addingTimeInterval(cap / r)
-            return fullAt > now ? (fullAt, name(b)) : nil
+            guard !isAuto(b), !b.isRenovating, cycle(b) > 0 else { return nil }
+            let readyAt = b.lastCollectedAt.addingTimeInterval(cycle(b))
+            return readyAt > now ? (readyAt, name(b)) : nil
         }
         .min { $0.0 < $1.0 }
+    }
+
+    // MARK: - Reading: wisps
+
+    /// Whether a lost wisp is drifting over town right now.
+    var wispVisible: Bool {
+        state.wispVisibleUntil.map { now < $0 } ?? false
     }
 
     // MARK: - Reading: stages
@@ -328,9 +359,6 @@ final class Game {
         return p
     }
 
-    /// Festival tokens for collecting from a shop that's at least this full.
-    static let tokenFullness = 0.25
-
     // MARK: - Reading: quests
 
     /// Quests in progress, in the order they appear in quests.json.
@@ -430,6 +458,9 @@ final class Game {
     func startRenovation(_ id: Int) -> Bool {
         guard let i = index(of: id), let def = def(for: state.buildings[i]),
               let next = nextStage(state.buildings[i]), canRenovate(state.buildings[i]) else { return false }
+        // Hand over anything that's ready before the shop closes.
+        let ready = pending(state.buildings[i])
+        if ready > 0 { credit(ready, from: state.buildings[i].defId) }
         settle(i)
         state.glimmer -= next.cost
         state.xp += def.xp * Double(state.buildings[i].stage + 1)
@@ -462,7 +493,7 @@ final class Game {
         guard canCleanse(chunk), state.glimmer >= cost else { return false }
         state.glimmer -= cost
         state.xp += Economy.cleanseXP(cleansedSoFar: state.cleansedChunks.count)
-        state.wisps += Economy.wispsPerCleanse
+        gainWisps(Economy.wispsPerCleanse, "cleansed the murk")
         state.cleansedChunks.insert(chunk)
         state.stats.chunksCleansed += 1
         layoutRevision += 1
@@ -502,7 +533,7 @@ final class Game {
         guard let def = roll else { return nil }
         state.wisps -= summonCost
         if Residents.lives(def.id, in: state) {
-            state.wisps += Economy.duplicateRefund
+            gainWisps(Economy.duplicateRefund, "returned by the shrine")
             save()
             return .duplicate(def, refund: Economy.duplicateRefund)
         }
@@ -535,7 +566,7 @@ final class Game {
         state.activeQuests[id] = nil
         state.completedQuests.insert(id)
         state.glimmer += q.reward.glimmer
-        state.wisps += q.reward.wisps
+        if q.reward.wisps > 0 { gainWisps(q.reward.wisps, "for “\(q.title)”") }
         state.xp += q.reward.xp
         announcedReady.remove(id)
         startQuests()
@@ -557,6 +588,7 @@ final class Game {
             settle(i)
         }
         updateEvent()
+        updateWisp()
         processArrivals()
         startQuests()
         awardLevelWisps()
@@ -588,14 +620,50 @@ final class Game {
         processArrivals()   // a bigger house may have room for someone now
     }
 
-    /// During a festival: one token for collecting from a shop that's at least a quarter full.
+    /// During a festival, collecting by hand earns tokens: one per 5 minutes of production collected.
     private func earnEventToken(for b: PlacedBuilding) {
         guard let (e, w) = EventCalendar.active(content.events, at: now) else { return }
-        let cap = capacity(b)
-        guard cap > 0, pending(b) >= cap * Self.tokenFullness else { return }
         var p = state.eventProgress[e.id].flatMap { $0.year == w.year ? $0 : nil } ?? EventProgress(year: w.year)
-        p.tokens += 1
+        p.tokens += cycle(b) * Economy.tokensPerProductionSecond
         state.eventProgress[e.id] = p
+    }
+
+    /// Adds wisps and shows where they came from.
+    private func gainWisps(_ amount: Double, _ reason: String) {
+        guard amount > 0 else { return }
+        state.wisps += amount
+        let n = Int(amount)
+        toasts.append(Toast(text: "+\(n) wisp\(n == 1 ? "" : "s") · \(reason)"))
+    }
+
+    /// Schedules lost wisps: one drifts over town every 30–60 minutes and fades after 90 seconds.
+    private func updateWisp() {
+        let t = now
+        if let until = state.wispVisibleUntil {
+            guard t >= until else { return }
+            state.wispVisibleUntil = nil
+            state.nextWispAt = nil
+        }
+        guard let due = state.nextWispAt else {
+            state.nextWispAt = t.addingTimeInterval(withRandom { $0.range(Economy.wispDelay) })
+            return
+        }
+        if t >= due {
+            state.wispVisibleUntil = t.addingTimeInterval(Economy.wispVisibleFor)
+            state.nextWispAt = nil
+        }
+    }
+
+    /// Catches the drifting wisp, if there is one. Returns how many wisps it was worth.
+    @discardableResult
+    func catchWisp() -> Double? {
+        guard wispVisible else { return nil }
+        let amount: Double = withRandom { $0.unit() } < Economy.doubleWispChance ? 2 : 1
+        gainWisps(amount, "caught a lost wisp")
+        state.wispVisibleUntil = nil
+        state.nextWispAt = now.addingTimeInterval(withRandom { $0.range(Economy.wispDelay) })
+        save()
+        return amount
     }
 
     /// Starts this year's run of a festival (announcing it once) and hands out milestone rewards.
@@ -609,7 +677,7 @@ final class Game {
         while p.reached < e.milestones.count, p.tokens >= e.milestones[p.reached].tokens {
             let reward = e.milestones[p.reached].reward
             state.glimmer += reward.glimmer
-            state.wisps += reward.wisps
+            if reward.wisps > 0 { gainWisps(reward.wisps, "\(e.name) reward") }
             if let deco = reward.decoration { state.unlockedDecorations.insert(deco) }
             if let resident = reward.resident { state.invitedResidents.insert(resident) }
             announcements.append(.eventMilestone(e, index: p.reached))
@@ -664,7 +732,7 @@ final class Game {
     private func awardLevelWisps() {
         let current = level
         guard current > state.rewardedLevel else { return }
-        state.wisps += Double(current - state.rewardedLevel) * Economy.wispsPerLevel
+        gainWisps(Double(current - state.rewardedLevel) * Economy.wispsPerLevel, "reached level \(current)")
         state.rewardedLevel = current
     }
 
@@ -676,17 +744,20 @@ final class Game {
         state.stats.collected[Stats.anyShop, default: 0] += amount
     }
 
-    /// Pays out whatever a shop has earned so far and restarts its timer. Used before anything
-    /// changes its rate, so a new rate never applies to time that already passed.
+    /// Lets a keeper collect every run its shop has finished (up to the offline cap), keeping any
+    /// progress on the current run. Hand-collected shops are left alone: they pay when you collect.
     private func settle(_ i: Int) {
         let b = state.buildings[i]
-        if isAuto(b) {
-            let elapsed = min(Economy.offlineCap, max(0, now.timeIntervalSince(b.lastCollectedAt)))
-            credit(rate(b) * elapsed, from: b.defId)
+        guard isAuto(b), !b.isRenovating else { return }
+        let c = cycle(b)
+        let runs = Economy.runsCompleted(since: b.lastCollectedAt, cycle: c, now: now, cap: Economy.offlineCap)
+        guard runs > 0 else { return }
+        credit(Double(runs) * payout(b), from: b.defId)
+        if now.timeIntervalSince(b.lastCollectedAt) > Economy.offlineCap {
+            state.buildings[i].lastCollectedAt = now
         } else {
-            credit(pending(b), from: b.defId)
+            state.buildings[i].lastCollectedAt = b.lastCollectedAt.addingTimeInterval(Double(runs) * c)
         }
-        state.buildings[i].lastCollectedAt = now
     }
 
     private func settleAllShops() {

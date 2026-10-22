@@ -9,11 +9,19 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        let game = Game(content: .load(), store: SaveStore())
+        let game = Game(content: .load(), store: RootView.makeStore())
         let ui = MapInteraction()
         _game = State(initialValue: game)
         _ui = State(initialValue: ui)
         _scene = State(initialValue: TownScene(game: game, ui: ui))
+    }
+
+    /// UI tests launch with `-uiTesting` to start from a fresh town every time, without touching the real save.
+    private static func makeStore() -> SaveStore {
+        guard ProcessInfo.processInfo.arguments.contains("-uiTesting") else { return SaveStore() }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("fenlight-uitest.json")
+        try? FileManager.default.removeItem(at: url)
+        return SaveStore(url: url)
     }
 
     var body: some View {

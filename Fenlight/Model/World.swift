@@ -19,11 +19,11 @@ enum World {
     static var chunksPerSide: Int { size / chunkSize }
     static var chunkCount: Int { chunksPerSide * chunksPerSide }
 
-    /// The patch of fen that is already clear when a new game starts.
-    static let startingChunks: Set<Chunk> = [
-        Chunk(cx: 2, cy: 2), Chunk(cx: 3, cy: 2),
-        Chunk(cx: 2, cy: 3), Chunk(cx: 3, cy: 3),
-    ]
+    /// The patch of fen that is already clear when a new game starts: one 4×4 chunk near the middle.
+    static let startingChunks: Set<Chunk> = [Chunk(cx: 2, cy: 2)]
+
+    /// Where the camera starts: the middle of the starting land.
+    static let startingCenter = Tile(c: 10, r: 10)
 
     static func inBounds(_ t: Tile) -> Bool {
         t.c >= 0 && t.r >= 0 && t.c < size && t.r < size

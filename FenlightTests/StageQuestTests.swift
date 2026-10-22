@@ -4,15 +4,15 @@ import XCTest
 private let content = GameContent(
     buildings: [
         BuildingDef(id: "reed_candles", kind: .shop, size: 1, cost: 25, unlockLevel: 1, xp: 5, color: "#FFFFFF", stages: [
-            StageDef(name: "Stall", blurb: "", sells: ["Rushlights"], rate: 1, capSeconds: 100),
-            StageDef(name: "Chandler", blurb: "", sells: ["Rushlights", "Tapers"], rate: 3, capSeconds: 100,
+            StageDef(name: "Stall", blurb: "", sells: ["Rushlights"], cycleSeconds: 10, payout: 10),
+            StageDef(name: "Chandler", blurb: "", sells: ["Rushlights", "Tapers"], cycleSeconds: 10, payout: 30,
                      cost: 50, buildSeconds: 600, requirements: [.level(2)]),
-            StageDef(name: "Chandlery", blurb: "", rate: 9, capSeconds: 100,
+            StageDef(name: "Chandlery", blurb: "", cycleSeconds: 10, payout: 90,
                      cost: 100, buildSeconds: 0, requirements: [.quest("first_light")]),
         ]),
         BuildingDef(id: "bakery", kind: .shop, size: 2, cost: 100, unlockLevel: 1, xp: 5, color: "#FFFFFF", stages: [
-            StageDef(name: "Oven", blurb: "", rate: 2, capSeconds: 50),
-            StageDef(name: "Bakery", blurb: "", rate: 6, capSeconds: 50, cost: 10, buildSeconds: 60,
+            StageDef(name: "Oven", blurb: "", cycleSeconds: 20, payout: 40),
+            StageDef(name: "Bakery", blurb: "", cycleSeconds: 20, payout: 120, cost: 10, buildSeconds: 60,
                      requirements: [.building("reed_candles", stage: 2), .resident("pip"), .restoration(0.2)]),
         ]),
         BuildingDef(id: "reed_cottage", kind: .house, size: 1, cost: 40, unlockLevel: 1, xp: 5, color: "#FFFFFF", stages: [
@@ -50,6 +50,7 @@ private final class TestTime {
 private func makeGame(_ time: TestTime, glimmer: Double = 10_000) -> Game {
     var state = GameState.newGame(now: time.date)
     state.glimmer = glimmer
+    useRoomyTestLayout(&state)
     return Game(content: content, state: state, clock: time.clock)
 }
 
@@ -58,11 +59,10 @@ private let stall = 1
 
 @MainActor
 final class StageTests: XCTestCase {
-    func testRateAndCapacityComeFromTheStage() {
+    func testPayoutComesFromTheStage() {
         let def = content.building("reed_candles")!
-        XCTAssertEqual(Economy.rate(def, stage: 1), 1)
-        XCTAssertEqual(Economy.rate(def, stage: 2), 3)
-        XCTAssertEqual(Economy.capacity(rate: 3, def.stage(2)), 300)
+        XCTAssertEqual(Economy.payout(def, stage: 1), 10)
+        XCTAssertEqual(Economy.payout(def, stage: 2), 30)
     }
 
     func testRenovationWaitsForRequirements() {
@@ -84,7 +84,7 @@ final class StageTests: XCTestCase {
         XCTAssertTrue(Requirements.isMet(.resident("wren"), state, content))
         XCTAssertFalse(Requirements.isMet(.resident("pip"), state, content))
         XCTAssertFalse(Requirements.isMet(.quest("first_light"), state, content))
-        XCTAssertTrue(Requirements.isMet(.restoration(0.1), state, content), "4 of 36 chunks is 11%")
+        XCTAssertTrue(Requirements.isMet(.restoration(0.1), state, content), "4 of 36 chunks is 11% (roomy test layout)")
         XCTAssertFalse(Requirements.isMet(.restoration(0.2), state, content))
         XCTAssertTrue(Requirements.isMet(.level(1), state, content))
     }
@@ -96,7 +96,7 @@ final class StageTests: XCTestCase {
         time.advance(30)
 
         XCTAssertTrue(game.startRenovation(stall))
-        XCTAssertEqual(game.state.glimmer, 100 + 30 - 50, accuracy: 0.001, "paid out 30, then the 50 cost")
+        XCTAssertEqual(game.state.glimmer, 100 + 10 - 50, accuracy: 0.001, "handed over the ready batch, then paid 50")
         XCTAssertTrue(game.building(id: stall)!.isRenovating)
 
         time.advance(300)
@@ -111,8 +111,9 @@ final class StageTests: XCTestCase {
         XCTAssertFalse(b.isRenovating)
         XCTAssertEqual(game.name(b), "Chandler")
         XCTAssertTrue(game.announcements.contains { $0.id == "transformed-reed_candles-2" })
+        XCTAssertEqual(game.pending(game.building(id: stall)!), 0, "a fresh run starts when it reopens")
         time.advance(10)
-        XCTAssertEqual(game.pending(game.building(id: stall)!), 30, accuracy: 0.001, "stage 2 rate")
+        XCTAssertEqual(game.pending(game.building(id: stall)!), 30, "stage 2 payout")
     }
 
     func testRenovationFinishesWhileAway() {
@@ -126,7 +127,7 @@ final class StageTests: XCTestCase {
         let back = Game(content: content, state: saved, clock: time.clock)
         let b = back.building(id: stall)!
         XCTAssertEqual(b.stage, 2)
-        XCTAssertEqual(back.pending(b), 300, accuracy: 0.001, "earning (and full) since it reopened")
+        XCTAssertEqual(back.pending(b), 30, "one stage-2 batch ready, waiting")
     }
 
     func testFinishNowCostsWisps() {
@@ -152,7 +153,7 @@ final class StageTests: XCTestCase {
         time.advance(600)
         game.tick()
         XCTAssertEqual(game.workers(at: stall).map(\.id), ["wren"])
-        XCTAssertEqual(game.rate(game.building(id: stall)!), 3 * 1.6, accuracy: 0.001)
+        XCTAssertEqual(game.payout(game.building(id: stall)!), 48, "30 × 1.6")
     }
 
     func testInstantStagesCompleteRightAway() {
@@ -179,6 +180,7 @@ final class StageTests: XCTestCase {
 
     func testLastStageHasNoNext() {
         var state = GameState.newGame(now: Date())
+        useRoomyTestLayout(&state)
         state.buildings[0].stage = 3
         let game = Game(content: content, state: state)
         XCTAssertNil(game.nextStage(game.building(id: stall)!))
@@ -205,20 +207,22 @@ final class QuestTests: XCTestCase {
         let game = makeGame(time)
         let q = content.quest("first_light")!
         XCTAssertEqual(game.progress(q).current, 0)
-        time.advance(15)
+        time.advance(10)
         game.collect(stall)
-        XCTAssertEqual(game.progress(q).current, 15, accuracy: 0.001)
+        XCTAssertEqual(game.progress(q).current, 10, accuracy: 0.001)
         XCTAssertFalse(game.isReady(q))
         time.advance(10)
         game.collectAll()
         XCTAssertTrue(game.isReady(q))
-        XCTAssertEqual(game.progress(q).current, 20, "capped at the target")
+        XCTAssertEqual(game.progress(q).current, 20)
     }
 
     func testClaimingGivesTheRewardOnceAndUnlocksFollowUps() {
         let time = TestTime()
         let game = makeGame(time, glimmer: 0)
-        time.advance(20)
+        time.advance(10)
+        game.collect(stall)
+        time.advance(10)
         game.collect(stall)
         game.tick()
         XCTAssertTrue(game.announcements.contains { $0.id == "quest-first_light" })
@@ -237,6 +241,7 @@ final class QuestTests: XCTestCase {
         state.glimmer = 100_000
         state.stats.chunksCleansed = 5
         state.completedQuests = ["first_light"]
+        useRoomyTestLayout(&state)
         let game = Game(content: content, state: state, clock: time.clock)
         let q = content.quest("murk")!
         XCTAssertEqual(game.progress(q).current, 0)

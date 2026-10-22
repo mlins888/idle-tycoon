@@ -60,6 +60,12 @@ Asset name: `walker.<id>` (for example `walker.wren`). The small figure that wal
 - Feet near the bottom centre (the game anchors the image 8% up from the bottom).
 - Draw them facing right; the game flips the image when they walk left.
 
+## Effects
+
+| Asset name | What it is | Notes |
+|------------|------------|-------|
+| `fx.wisp`  | A lost wisp drifting over town | About 48 × 48 (@2x 96 × 96), glowing, transparent background |
+
 ## UI
 
 | Asset name  | What it is                     | Notes                                  |

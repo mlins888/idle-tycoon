@@ -17,7 +17,7 @@ open Fenlight.xcodeproj
 The Xcode project is generated from `project.yml` and isn't checked in. Run `xcodegen generate`
 again after adding or removing files.
 
-Run the tests from the command line:
+Run the tests (unit tests, plus a UI test that taps through the main screens) from the command line:
 
 ```bash
 xcodebuild test -scheme Fenlight -destination 'platform=iOS Simulator,name=iPhone 17 Pro'

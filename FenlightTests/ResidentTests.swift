@@ -1,9 +1,9 @@
 import XCTest
 @testable import Fenlight
 
-private func shop(_ id: String, rate: Double, cap: Double = 100, size: Int = 1, cost: Double = 10) -> BuildingDef {
-    BuildingDef(id: id, kind: .shop, size: size, cost: cost, unlockLevel: 1, xp: 1, color: "#FFFFFF",
-                stages: [StageDef(name: id, blurb: "", rate: rate, capSeconds: cap)])
+/// Shops here run every 10 seconds; `pay` is the payout per run.
+private func shop(_ id: String, pay: Double, size: Int = 1, cost: Double = 10) -> BuildingDef {
+    testShopDef(id, size: size, cost: cost, cycle: 10, payout: pay)
 }
 
 private func other(_ id: String, _ kind: BuildingKind, beds: Int = 0, unique: Bool = false) -> BuildingDef {
@@ -19,8 +19,8 @@ private func person(_ id: String, _ arrival: ArrivalKind, rarity: Rarity = .comm
 
 private let content = GameContent(
     buildings: [
-        shop("reed_candles", rate: 1),
-        shop("bakery", rate: 2, size: 2),
+        shop("reed_candles", pay: 100),
+        shop("bakery", pay: 200, size: 2),
         other("reed_cottage", .house, beds: 1),
         other("stilt_house", .house, beds: 3),
         other("shrine", .shrine, unique: true),
@@ -53,6 +53,7 @@ private let bakerySpot = Tile(c: 10, r: 14)
 private func makeGame(_ time: TestTime, glimmer: Double = 100_000, content c: GameContent = content) -> Game {
     var state = GameState.newGame(now: time.date)
     state.glimmer = glimmer
+    useRoomyTestLayout(&state)
     return Game(content: c, state: state, clock: time.clock)
 }
 
@@ -70,6 +71,7 @@ final class ArrivalTests: XCTestCase {
         let time = TestTime()
         var state = GameState.newGame(now: time.date)
         state.glimmer = 1_000
+        useRoomyTestLayout(&state)
         state.buildings.removeAll { $0.defId == "reed_cottage" }
         let game = Game(content: content, state: state, clock: time.clock)
 
@@ -186,8 +188,8 @@ final class WorkerTests: XCTestCase {
 
         XCTAssertTrue(game.assignWorker("wren", to: stall.id))
         XCTAssertTrue(game.assignWorker(wanderer, to: bakery.id))
-        XCTAssertEqual(game.rate(game.building(id: stall.id)!), 1.6, accuracy: 0.001, "favourite: +60%")
-        XCTAssertEqual(game.rate(game.building(id: bakery.id)!), 2.5, accuracy: 0.001, "other: +25%")
+        XCTAssertEqual(game.payout(game.building(id: stall.id)!), 160, "favourite: +60%")
+        XCTAssertEqual(game.payout(game.building(id: bakery.id)!), 250, "other: +25%")
     }
 
     func testOneWorkerPerSmallShop() {
@@ -200,13 +202,14 @@ final class WorkerTests: XCTestCase {
         XCTAssertFalse(game.assignWorker(wanderer, to: stall))
     }
 
-    func testAssigningPaysOutWhatTheShopEarnedSoFar() {
+    func testAssigningKeepsTheRunGoingAndRaisesItsPayout() {
         let time = TestTime()
         let game = makeGame(time, glimmer: 0)
-        time.advance(10)
+        time.advance(5)
         XCTAssertTrue(game.assignWorker("wren", to: game.state.buildings[0].id))
-        XCTAssertEqual(game.state.glimmer, 10, accuracy: 0.001, "earned at the old rate")
-        XCTAssertEqual(game.pending(game.state.buildings[0]), 0)
+        XCTAssertEqual(game.timeLeft(game.state.buildings[0]), 5, accuracy: 0.001, "the run isn't restarted")
+        time.advance(5)
+        XCTAssertEqual(game.pending(game.state.buildings[0]), 160)
     }
 }
 
@@ -232,9 +235,9 @@ final class AutoCollectTests: XCTestCase {
         game.buyCharter(stall)
         let before = game.state.glimmer
 
-        time.advance(500)   // well past the stall's normal 100-glimmer limit
+        time.advance(500)   // 50 runs of 10 seconds
         game.tick()
-        XCTAssertEqual(game.state.glimmer - before, 1.6 * 500, accuracy: 0.01)
+        XCTAssertEqual(game.state.glimmer - before, 50 * 160, accuracy: 0.01)
         XCTAssertEqual(game.pending(game.building(id: stall)!), 0, "nothing to tap")
         XCTAssertEqual(game.totalPending(), 0)
     }
@@ -250,7 +253,7 @@ final class AutoCollectTests: XCTestCase {
 
         time.advance(20 * 3600)
         let back = Game(content: content, state: saved, clock: time.clock)
-        XCTAssertEqual(back.awaySummary?.keepers ?? 0, 1.6 * Economy.offlineCap, accuracy: 0.01)
+        XCTAssertEqual(back.awaySummary?.keepers ?? 0, Economy.offlineCap / 10 * 160, accuracy: 0.01)
     }
 
     func testRemovingTheWorkerStopsAutoCollect() {

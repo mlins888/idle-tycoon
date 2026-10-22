@@ -83,9 +83,9 @@ struct BuildingPanel: View {
     }
 
     private func content(_ def: BuildingDef, _ stage: StageDef) -> some View {
-        let rate = game.rate(building)
-        let capacity = game.capacity(building)
-        let waiting = game.pending(building)
+        let payout = game.payout(building)
+        let cycle = game.cycle(building)
+        let ready = game.isReady(building)
         let auto = game.isAuto(building)
 
         return VStack(alignment: .leading, spacing: 10) {
@@ -97,21 +97,30 @@ struct BuildingPanel: View {
                 RenovationProgress(game: game, building: building)
             } else {
                 HStack(spacing: 16) {
-                    stat("Makes", "\(Format.compact(rate * 60))/min")
+                    stat("Pays", Format.compact(payout))
+                    stat("Every", Format.duration(cycle))
                     let decor = game.decorationBonus(building)
                     if decor > 0 {
                         stat("Decor", "+\(Int((decor * 100).rounded()))%")
                     }
-                    if auto {
-                        stat("Keeper", "Collecting")
-                    } else {
-                        stat("Holds", Format.compact(capacity))
-                        stat("Waiting", Format.compact(waiting), highlight: game.isFull(building))
-                    }
+                    if auto { stat("Keeper", "Collecting") }
                 }
                 if !auto {
-                    ProgressView(value: min(1, waiting / max(1, capacity)))
-                        .tint(game.isFull(building) ? Theme.ember : Theme.lantern)
+                    if ready {
+                        Button {
+                            if game.collect(building.id) > 0 { Haptics.collect() }
+                        } label: {
+                            CostLabel(verb: "Collect", cost: payout)
+                        }
+                        .buttonStyle(FenButtonStyle(prominent: true))
+                    } else {
+                        ProgressView(value: game.runProgress(building))
+                            .tint(Theme.lantern)
+                        Text("Ready in \(Format.duration(game.timeLeft(building)))")
+                            .font(Theme.body(12, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.textDim)
+                    }
                 }
             }
 
@@ -323,9 +332,10 @@ private struct NextStageCard: View {
                 Blurb(text: next.blurb)
                 Sells(items: next.sells)
                 if def.kind == .shop {
-                    let now = game.rate(building)
-                    let then = Economy.rate(def, stage: building.stage + 1, workers: game.workers(at: building.id))
-                    Text("Makes \(Format.compact(now * 60))/min → \(Format.compact(then * 60))/min")
+                    let now = game.payout(building)
+                    let then = Economy.payout(def, stage: building.stage + 1, workers: game.workers(at: building.id),
+                                              decorationBonus: game.decorationBonus(building))
+                    Text("Pays \(Format.compact(now)) → \(Format.compact(then)) every \(Format.duration(next.cycleSeconds))")
                         .font(Theme.body(12, weight: .semibold))
                         .foregroundStyle(Theme.moss)
                 } else if next.beds > 0 {
@@ -545,43 +555,55 @@ struct CleansePanel: View {
 
 // MARK: - Build menu
 
-/// Everything you can build, grouped by kind, with locked ones greyed out.
+/// Everything you can build, in tabs by kind, with locked ones greyed out and the reason shown.
 struct BuildMenu: View {
     let game: Game
     var onChoose: (String) -> Void
+    @AppStorage("buildMenuTab") private var tab = Tab.shops
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Build")
-                    .font(Theme.title(24))
-                    .padding(.top, 20)
-                section("Shops", kinds: [.shop])
-                section("Homes", kinds: [.house])
-                section("Decorations", kinds: [.decoration])
-                section("Special", kinds: [.shrine, .guild])
+    enum Tab: String, CaseIterable {
+        case shops = "Shops"
+        case homes = "Homes"
+        case decor = "Decor"
+        case special = "Special"
+
+        var kinds: Set<BuildingKind> {
+            switch self {
+            case .shops: return [.shop]
+            case .homes: return [.house]
+            case .decor: return [.decoration]
+            case .special: return [.shrine, .guild]
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
         }
-        .foregroundStyle(Theme.text)
     }
 
-    @ViewBuilder
-    private func section(_ title: String, kinds: Set<BuildingKind>) -> some View {
-        Text(title.uppercased())
-            .font(Theme.body(12, weight: .bold))
-            .tracking(1)
-            .foregroundStyle(Theme.textDim)
-            .padding(.top, 8)
-        ForEach(game.content.buildings.filter { kinds.contains($0.kind) }) { def in
-            row(def)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Build")
+                .font(Theme.title(24))
+                .padding(.top, 20)
+            Picker("Kind", selection: $tab) {
+                ForEach(Tab.allCases, id: \.self) { Text($0.rawValue) }
+            }
+            .pickerStyle(.segmented)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(game.content.buildings.filter { tab.kinds.contains($0.kind) }) { def in
+                        row(def)
+                    }
+                }
+                .padding(.bottom, 24)
+            }
         }
+        .padding(.horizontal, 16)
+        .foregroundStyle(Theme.text)
     }
 
     private func detail(_ def: BuildingDef) -> String {
         switch def.kind {
-        case .shop: return "Sells \(def.stage(1).sells.joined(separator: ", ").lowercased()) · \(Format.compact(Economy.rate(def, stage: 1) * 60))/min"
+        case .shop:
+            let s = def.stage(1)
+            return "Sells \(s.sells.joined(separator: ", ").lowercased()) · \(Format.compact(s.payout)) every \(Format.duration(s.cycleSeconds))"
         case .house: return "\(def.stage(1).beds) bed\(def.stage(1).beds == 1 ? "" : "s")"
         case .shrine: return "Summon rare residents"
         case .guild: return "Unlocks auto-collect"
@@ -591,9 +613,21 @@ struct BuildMenu: View {
         }
     }
 
+    /// Why this can't be built right now, or nil if it can.
+    private func lockedReason(_ def: BuildingDef) -> String? {
+        if def.eventOnly && !game.state.unlockedDecorations.contains(def.id) { return "Festival reward" }
+        if game.level < def.unlockLevel { return "Level \(def.unlockLevel)" }
+        if !game.canBuildMore(def) {
+            if def.unique { return "Built" }
+            let copies = game.state.buildings.filter { $0.defId == def.id }
+            if copies.count >= 2 { return "Both built" }
+            return "One per town until it's the \(def.stage(def.stages.count).name)"
+        }
+        return nil
+    }
+
     private func row(_ def: BuildingDef) -> some View {
-        let unlocked = game.isUnlocked(def)
-        let canMore = game.canBuildMore(def)
+        let reason = lockedReason(def)
         let cost = game.buildCost(def)
         let affordable = game.state.glimmer >= cost
 
@@ -613,24 +647,15 @@ struct BuildMenu: View {
                 Text(detail(def))
                     .font(Theme.body(12, weight: .semibold))
                     .foregroundStyle(Theme.moss)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let reason {
+                    Text(reason)
+                        .font(Theme.body(12, weight: .bold))
+                        .foregroundStyle(Theme.textDim)
+                }
             }
             Spacer(minLength: 8)
-            if def.eventOnly && !game.state.unlockedDecorations.contains(def.id) {
-                Text("Festival")
-                    .font(Theme.body(12, weight: .bold))
-                    .foregroundStyle(Theme.textDim)
-                    .padding(.top, 12)
-            } else if !unlocked {
-                Text("Level \(def.unlockLevel)")
-                    .font(Theme.body(12, weight: .bold))
-                    .foregroundStyle(Theme.textDim)
-                    .padding(.top, 12)
-            } else if !canMore {
-                Text("Built")
-                    .font(Theme.body(12, weight: .bold))
-                    .foregroundStyle(Theme.moss)
-                    .padding(.top, 12)
-            } else {
+            if reason == nil {
                 Button {
                     onChoose(def.id)
                 } label: {
@@ -641,9 +666,10 @@ struct BuildMenu: View {
                 }
                 .buttonStyle(FenButtonStyle(prominent: affordable))
                 .disabled(!affordable)
+                .accessibilityLabel("Build \(def.name) for \(Format.compact(cost)) glimmer")
             }
         }
-        .opacity(unlocked ? 1 : 0.55)
+        .opacity(reason == nil ? 1 : 0.55)
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(Theme.button.opacity(0.6)))
     }
@@ -669,7 +695,7 @@ struct WelcomeBackView: View {
                     line("Your keepers collected", summary.keepers)
                 }
                 if summary.waiting >= 1 {
-                    line("Waiting in your shops", summary.waiting)
+                    line("Ready in your shops", summary.waiting)
                 }
                 if !summary.arrivals.isEmpty {
                     VStack(spacing: 8) {

@@ -73,10 +73,10 @@ struct StageDef: Codable, Hashable {
     let blurb: String
     /// Goods this stage sells, for display.
     var sells: [String] = []
-    /// Glimmer per second (shops).
-    var rate: Double = 0
-    /// Seconds of production it holds before it's full and stops (shops).
-    var capSeconds: Double = 0
+    /// How long one production run takes, in seconds (shops).
+    var cycleSeconds: Double = 0
+    /// Glimmer paid out when a run finishes and you collect it (shops).
+    var payout: Double = 0
     /// Beds (houses).
     var beds: Int = 0
     /// Glimmer to renovate into this stage. Unused for stage 1 (that's the building's build cost).
@@ -92,8 +92,8 @@ extension StageDef {
         name = try c.decode(String.self, forKey: .name)
         blurb = try c.decode(String.self, forKey: .blurb)
         sells = try c.decodeIfPresent([String].self, forKey: .sells) ?? []
-        rate = try c.decodeIfPresent(Double.self, forKey: .rate) ?? 0
-        capSeconds = try c.decodeIfPresent(Double.self, forKey: .capSeconds) ?? 0
+        cycleSeconds = try c.decodeIfPresent(Double.self, forKey: .cycleSeconds) ?? 0
+        payout = try c.decodeIfPresent(Double.self, forKey: .payout) ?? 0
         beds = try c.decodeIfPresent(Int.self, forKey: .beds) ?? 0
         cost = try c.decodeIfPresent(Double.self, forKey: .cost) ?? 0
         buildSeconds = try c.decodeIfPresent(Double.self, forKey: .buildSeconds) ?? 0

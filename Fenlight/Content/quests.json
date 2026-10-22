@@ -4,15 +4,15 @@
     "chapter": 1,
     "giver": "wren",
     "title": "The First Light",
-    "text": "My rushlight is the only light left in the fen. Help me keep it burning, and maybe others will see it and come home.",
+    "text": "My rushlight is the only light left in the fen. Help me keep it burning: collect from the stall a few times, and maybe others will see it and come home.",
     "doneText": "It's still burning. More than that, it's brighter. Someone out there will have seen it.",
     "objective": {
       "type": "collect",
       "shop": "reed_candles",
-      "amount": 30
+      "amount": 15
     },
     "reward": {
-      "glimmer": 50,
+      "glimmer": 25,
       "xp": 20
     }
   },
@@ -90,15 +90,15 @@
     "chapter": 1,
     "giver": "marigold",
     "title": "Warm Ovens",
-    "text": "An oven's no good cold. Bake me something, collect 150 glimmer from a Mossbread Oven, and I'll show you what a real bakery looks like.",
+    "text": "An oven's no good cold. Collect 90 glimmer from a Mossbread Oven, and I'll show you what a real bakery looks like.",
     "doneText": "Now that's a proper bake. Let's talk about cakes.",
     "objective": {
       "type": "collect",
       "shop": "mossbread",
-      "amount": 150
+      "amount": 90
     },
     "reward": {
-      "glimmer": 200,
+      "glimmer": 100,
       "xp": 40
     }
   },
@@ -115,7 +115,7 @@
       "stage": 2
     },
     "reward": {
-      "glimmer": 2000,
+      "glimmer": 600,
       "wisps": 5
     },
     "prerequisites": [
@@ -153,7 +153,7 @@
       "count": 1
     },
     "reward": {
-      "glimmer": 400,
+      "glimmer": 300,
       "xp": 60
     }
   },
@@ -162,15 +162,15 @@
     "chapter": 1,
     "giver": "dunstan",
     "title": "Tea Fit for a Court",
-    "text": "A proper teahouse needs proper custom. Collect 5,000 glimmer from your tea shops and folk will come from all over.",
-    "doneText": "Five thousand cups. I've decided to call it a tradition.",
+    "text": "A proper teahouse needs proper custom. Collect 2,000 glimmer from your tea shop and folk will come from all over.",
+    "doneText": "Two thousand glimmer of tea. I've decided to call it a tradition.",
     "objective": {
       "type": "collect",
       "shop": "toadstool_tea",
-      "amount": 5000
+      "amount": 2000
     },
     "reward": {
-      "glimmer": 8000,
+      "glimmer": 3000,
       "wisps": 5
     },
     "prerequisites": [
@@ -197,7 +197,7 @@
       "count": 1
     },
     "reward": {
-      "glimmer": 1500,
+      "glimmer": 800,
       "xp": 80
     }
   },
@@ -206,15 +206,15 @@
     "chapter": 1,
     "giver": "hazel",
     "title": "A Remedy for the Fen",
-    "text": "Half the town has murk-cough. Collect 20,000 glimmer from your apothecaries so we can stock up on remedies.",
+    "text": "Half the town has murk-cough. Collect 12,000 glimmer from your apothecary so we can stock up on remedies.",
     "doneText": "Nobody's coughed all week. I've never been so bored. Wonderful.",
     "objective": {
       "type": "collect",
       "shop": "apothecary",
-      "amount": 20000
+      "amount": 12000
     },
     "reward": {
-      "glimmer": 30000,
+      "glimmer": 15000,
       "wisps": 8
     },
     "prerequisites": [
@@ -241,7 +241,7 @@
       "count": 1
     },
     "reward": {
-      "glimmer": 1500,
+      "glimmer": 2000,
       "wisps": 3
     }
   },
@@ -258,7 +258,7 @@
       "count": 1
     },
     "reward": {
-      "glimmer": 20000,
+      "glimmer": 30000,
       "wisps": 5
     }
   },

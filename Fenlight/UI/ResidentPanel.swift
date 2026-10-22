@@ -5,14 +5,26 @@ struct RegistryGrid: View {
     let game: Game
 
     var body: some View {
-        let order: [ArrivalKind] = [.story, .wanderer, .summon]
-        let sorted = game.content.residents.sorted {
-            (order.firstIndex(of: $0.arrival)!, $0.unlockLevel, $0.rarity) < (order.firstIndex(of: $1.arrival)!, $1.unlockLevel, $1.rarity)
-        }
+        let sorted = RegistryGrid.ordered(game.content.residents)
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], spacing: 10) {
             ForEach(sorted) { r in
                 card(r, found: game.resident(r.id) != nil)
             }
+        }
+    }
+
+    /// Story residents first, then wanderers, summons and festival residents; each by level, then rarity.
+    static func ordered(_ residents: [ResidentDef]) -> [ResidentDef] {
+        func rank(_ a: ArrivalKind) -> Int {
+            switch a {
+            case .story: return 0
+            case .wanderer: return 1
+            case .summon: return 2
+            case .event: return 3
+            }
+        }
+        return residents.sorted {
+            (rank($0.arrival), $0.unlockLevel, $0.rarity) < (rank($1.arrival), $1.unlockLevel, $1.rarity)
         }
     }
 

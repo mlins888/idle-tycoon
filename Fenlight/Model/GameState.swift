@@ -56,7 +56,7 @@ struct EventProgress: Codable, Equatable {
 
 /// Everything that gets saved. Kept as plain data so it can be encoded and tested easily.
 struct GameState: Codable, Equatable {
-    static let currentVersion = 4
+    static let currentVersion = 5
 
     var version: Int = GameState.currentVersion
     var glimmer: Double
@@ -90,14 +90,20 @@ struct GameState: Codable, Equatable {
     /// Festival residents who've been invited and will move in when there's a bed.
     var invitedResidents: Set<String> = []
 
+    // Added in version 5. (Shops' `lastCollectedAt` now means "when the current production run started".)
+    /// When the next lost wisp drifts over town.
+    var nextWispAt: Date?
+    /// While a lost wisp is drifting over town, when it fades away.
+    var wispVisibleUntil: Date?
+
     static func newGame(now: Date) -> GameState {
         GameState(
             glimmer: 60,
             xp: 0,
             buildings: [
-                PlacedBuilding(id: 1, defId: "reed_candles", origin: Tile(c: 11, r: 11),
+                PlacedBuilding(id: 1, defId: "reed_candles", origin: Tile(c: 10, r: 10),
                                stage: 1, lastCollectedAt: now),
-                PlacedBuilding(id: 2, defId: "reed_cottage", origin: Tile(c: 9, r: 12),
+                PlacedBuilding(id: 2, defId: "reed_cottage", origin: Tile(c: 8, r: 9),
                                stage: 1, lastCollectedAt: now),
             ],
             cleansedChunks: World.startingChunks,
@@ -155,5 +161,7 @@ extension GameState {
         eventProgress = try c.decodeIfPresent([String: EventProgress].self, forKey: .eventProgress) ?? [:]
         unlockedDecorations = try c.decodeIfPresent(Set<String>.self, forKey: .unlockedDecorations) ?? []
         invitedResidents = try c.decodeIfPresent(Set<String>.self, forKey: .invitedResidents) ?? []
+        nextWispAt = try c.decodeIfPresent(Date.self, forKey: .nextWispAt)
+        wispVisibleUntil = try c.decodeIfPresent(Date.self, forKey: .wispVisibleUntil)
     }
 }
