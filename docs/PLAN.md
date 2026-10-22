@@ -13,7 +13,7 @@ Decisions already made:
 
 Starting point: there is no existing code; this is a new project. Xcode is installed at `/Applications/Xcode.app`, but the active developer directory points to Command Line Tools. The user must run `sudo xcode-select -s /Applications/Xcode.app` once (it needs their password).
 
-Working names, all changeable later: town **"Hearthvale"**, currency **"glimmer"**.
+Name: **Fenlight**. Currency: **glimmer**. Premise: the Lantern Thief stole every light in the fen and the town sank into gloom; the player cleanses the murk (this is how land expands) and the town regains colour as it is restored.
 
 ## Architecture
 
@@ -44,15 +44,15 @@ Working names, all changeable later: town **"Hearthvale"**, currency **"glimmer"
 
 ## Proposed project layout
 ```
-Hearthvale/
-  App/            HearthvaleApp.swift, RootView.swift
+Fenlight/
+  App/            FenlightApp.swift, RootView.swift
   Model/          GameState, Economy, Grid, Building, Resident, Decoration, EventCalendar, GameClock
   Content/        buildings.json, residents.json, decorations.json, events.json
   Map/            TownScene (SpriteKit), IsoMath, CameraController, PlacementController, ArtCatalog
   UI/             HUDView, ShopPanel, BuildMenu, ResidentsView, Theme
   Persistence/    SaveStore
   Assets.xcassets (placeholders → user art)
-HearthvaleTests/  EconomyTests, IsoMathTests, GridTests, SaveTests
+FenlightTests/  EconomyTests, IsoMathTests, GridTests, SaveTests
 docs/ART_SPEC.md
 ```
 
