@@ -15,15 +15,19 @@ enum Residents {
         state.residents.filter { $0.workId == shopId }
     }
 
+    static func beds(_ b: PlacedBuilding, _ content: GameContent) -> Int {
+        content.building(b.defId)?.stage(b.stage).beds ?? 0
+    }
+
     static func totalBeds(_ state: GameState, _ content: GameContent) -> Int {
-        state.buildings.reduce(0) { $0 + (content.building($1.defId)?.beds ?? 0) }
+        state.buildings.reduce(0) { $0 + beds($1, content) }
     }
 
     /// The first house with an empty bed, if any.
     static func houseWithFreeBed(_ state: GameState, _ content: GameContent) -> Int? {
         state.buildings.first { b in
-            guard let beds = content.building(b.defId)?.beds, beds > 0 else { return false }
-            return occupants(of: b.id, in: state).count < beds
+            let n = beds(b, content)
+            return n > 0 && occupants(of: b.id, in: state).count < n
         }?.id
     }
 

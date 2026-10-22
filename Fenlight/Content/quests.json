@@ -1,0 +1,302 @@
+[
+  {
+    "id": "first_light",
+    "chapter": 1,
+    "giver": "wren",
+    "title": "The First Light",
+    "text": "My rushlight is the only light left in the fen. Help me keep it burning, and maybe others will see it and come home.",
+    "doneText": "It's still burning. More than that, it's brighter. Someone out there will have seen it.",
+    "objective": {
+      "type": "collect",
+      "shop": "reed_candles",
+      "amount": 30
+    },
+    "reward": {
+      "glimmer": 50,
+      "xp": 20
+    }
+  },
+  {
+    "id": "push_back_the_murk",
+    "chapter": 1,
+    "giver": "wren",
+    "title": "Push Back the Murk",
+    "text": "The gloom creeps right up to my door. Tap the murk at the edge of town and cleanse it. Every patch we reclaim is a patch the Thief doesn't have.",
+    "doneText": "Look at that. Real grass. I'd forgotten what green looked like.",
+    "objective": {
+      "type": "cleanse",
+      "count": 1
+    },
+    "reward": {
+      "wisps": 5,
+      "xp": 40
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "first_light"
+      }
+    ]
+  },
+  {
+    "id": "a_place_to_stay",
+    "chapter": 1,
+    "giver": "wren",
+    "title": "A Place to Stay",
+    "text": "Folk won't stay without somewhere to sleep. Build another cottage, and I'll put the kettle on for whoever turns up.",
+    "doneText": "Two cottages. That's practically a village.",
+    "objective": {
+      "type": "build",
+      "building": "reed_cottage",
+      "count": 2
+    },
+    "reward": {
+      "glimmer": 60,
+      "wisps": 2
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "first_light"
+      }
+    ]
+  },
+  {
+    "id": "ovens_warm",
+    "chapter": 1,
+    "giver": "marigold",
+    "title": "Warm Ovens",
+    "text": "An oven's no good cold. Bake me something, collect 150 glimmer from a Mossbread Oven, and I'll show you what a real bakery looks like.",
+    "doneText": "Now that's a proper bake. Let's talk about cakes.",
+    "objective": {
+      "type": "collect",
+      "shop": "mossbread",
+      "amount": 150
+    },
+    "reward": {
+      "glimmer": 200,
+      "xp": 40
+    }
+  },
+  {
+    "id": "a_proper_cake",
+    "chapter": 1,
+    "giver": "marigold",
+    "title": "A Proper Cake",
+    "text": "Bread's all very well. But a town needs cake. Turn the oven into a real Mossbread Bakery.",
+    "doneText": "Honey cakes in the window. People stopped in the street. I saw a frog cry.",
+    "objective": {
+      "type": "stage",
+      "building": "mossbread",
+      "stage": 2
+    },
+    "reward": {
+      "glimmer": 2000,
+      "wisps": 5
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "ovens_warm"
+      }
+    ]
+  },
+  {
+    "id": "room_for_wanderers",
+    "chapter": 1,
+    "giver": "pip",
+    "title": "Room for Wanderers",
+    "text": "I've met plenty of folk on the road who'd settle here, if there was room. Get Fenlight to four residents and I'll spread the word.",
+    "doneText": "Four! I'll be telling everyone between here and the deep fen.",
+    "objective": {
+      "type": "residents",
+      "count": 4
+    },
+    "reward": {
+      "wisps": 6
+    }
+  },
+  {
+    "id": "tea_time",
+    "chapter": 1,
+    "giver": "dunstan",
+    "title": "Tea in the Rain",
+    "text": "There's nothing a cup of mushroom tea can't fix. Build a Tea Cart and I'll prove it.",
+    "doneText": "Steeped for exactly as long as it rained. Perfect.",
+    "objective": {
+      "type": "build",
+      "building": "toadstool_tea",
+      "count": 1
+    },
+    "reward": {
+      "glimmer": 400,
+      "xp": 60
+    }
+  },
+  {
+    "id": "tea_for_the_court",
+    "chapter": 1,
+    "giver": "dunstan",
+    "title": "Tea Fit for a Court",
+    "text": "A proper teahouse needs proper custom. Collect 5,000 glimmer from your tea shops and folk will come from all over.",
+    "doneText": "Five thousand cups. I've decided to call it a tradition.",
+    "objective": {
+      "type": "collect",
+      "shop": "toadstool_tea",
+      "amount": 5000
+    },
+    "reward": {
+      "glimmer": 8000,
+      "wisps": 5
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "tea_time"
+      },
+      {
+        "type": "level",
+        "level": 5
+      }
+    ]
+  },
+  {
+    "id": "seeds_from_hazel",
+    "chapter": 1,
+    "giver": "hazel",
+    "title": "Seeds in the Peat",
+    "text": "I've brought seeds from three counties and none of them like the murk. Build a Peat Garden and we'll see what grows.",
+    "doneText": "Sundew! And bogbean! And something I can't identify, which is exciting.",
+    "objective": {
+      "type": "build",
+      "building": "herb_garden",
+      "count": 1
+    },
+    "reward": {
+      "glimmer": 1500,
+      "xp": 80
+    }
+  },
+  {
+    "id": "remedy_for_the_fen",
+    "chapter": 1,
+    "giver": "hazel",
+    "title": "A Remedy for the Fen",
+    "text": "Half the town has murk-cough. Collect 20,000 glimmer from your apothecaries so we can stock up on remedies.",
+    "doneText": "Nobody's coughed all week. I've never been so bored. Wonderful.",
+    "objective": {
+      "type": "collect",
+      "shop": "apothecary",
+      "amount": 20000
+    },
+    "reward": {
+      "glimmer": 30000,
+      "wisps": 8
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "seeds_from_hazel"
+      },
+      {
+        "type": "level",
+        "level": 6
+      }
+    ]
+  },
+  {
+    "id": "bramble_ferry",
+    "chapter": 1,
+    "giver": "old_bramble",
+    "title": "The Old Ferry",
+    "text": "There used to be a ferry here. There used to be a lot of things. Build me a Ferry Landing and I'll show you the channels.",
+    "doneText": "There. Now the fen has a way across it again.",
+    "objective": {
+      "type": "build",
+      "building": "ferry_dock",
+      "count": 1
+    },
+    "reward": {
+      "glimmer": 1500,
+      "wisps": 3
+    }
+  },
+  {
+    "id": "ilsabets_trail",
+    "chapter": 1,
+    "giver": "ilsabet",
+    "title": "Lanterns in the Reeds",
+    "text": "I tended every lantern in this fen before the Thief came. I want them back. Start with a Lantern Repair Bench.",
+    "doneText": "The first mended lantern. It's not much. It's a start.",
+    "objective": {
+      "type": "build",
+      "building": "lantern_works",
+      "count": 1
+    },
+    "reward": {
+      "glimmer": 20000,
+      "wisps": 5
+    }
+  },
+  {
+    "id": "half_the_fen",
+    "chapter": 1,
+    "giver": "ilsabet",
+    "title": "Half the Fen",
+    "text": "The Thief's trail runs through the murk. Cleanse six more patches and we'll be able to follow it.",
+    "doneText": "There. Do you see the scorch marks on the reeds? That's where the lanterns were taken.",
+    "objective": {
+      "type": "cleanse",
+      "count": 6
+    },
+    "reward": {
+      "wisps": 10,
+      "xp": 500
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "ilsabets_trail"
+      }
+    ]
+  },
+  {
+    "id": "the_thiefs_trail",
+    "chapter": 1,
+    "giver": "ilsabet",
+    "title": "The Thief's Trail",
+    "text": "The trail leads somewhere deep and dark. We'll need a bigger town behind us before we go looking. Reach level 9.",
+    "doneText": "We're ready. Or as ready as anyone can be. The Thief is out there, and now we know where to look.",
+    "objective": {
+      "type": "level",
+      "level": 9
+    },
+    "reward": {
+      "wisps": 15,
+      "xp": 800
+    },
+    "prerequisites": [
+      {
+        "type": "quest",
+        "quest": "half_the_fen"
+      }
+    ]
+  },
+  {
+    "id": "a_lamp_for_sorrel",
+    "chapter": 1,
+    "giver": "sorrel",
+    "title": "A Lamp for Sorrel",
+    "text": "I came back because I saw a lit window. I'd like to see a thousand. Turn the Rushlight Stall into a Glimmerwick Chandlery.",
+    "doneText": "Every window in town is lit. I could weep. I won't. But I could.",
+    "objective": {
+      "type": "stage",
+      "building": "reed_candles",
+      "stage": 3
+    },
+    "reward": {
+      "glimmer": 50000,
+      "wisps": 5
+    }
+  }
+]

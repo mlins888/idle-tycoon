@@ -65,7 +65,7 @@ private func stat(_ label: String, _ value: String, highlight: Bool = false) -> 
 
 // MARK: - Shops
 
-/// Details for a tapped shop: what it makes, its workers, upgrade, charter and move.
+/// Details for a tapped shop: what it sells and makes, its workers, its next stage, charter and move.
 struct BuildingPanel: View {
     let game: Game
     let ui: MapInteraction
@@ -73,66 +73,55 @@ struct BuildingPanel: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { _ in
-            if let def = game.def(for: building) {
-                content(def)
+            if let def = game.def(for: building), let stage = game.stageDef(building) {
+                ScrollIfNeeded {
+                    content(def, stage)
+                }
+                .fenPanel()
             }
         }
     }
 
-    private func content(_ def: BuildingDef) -> some View {
+    private func content(_ def: BuildingDef, _ stage: StageDef) -> some View {
         let rate = game.rate(building)
         let capacity = game.capacity(building)
         let waiting = game.pending(building)
         let auto = game.isAuto(building)
-        let upgradeCost = game.upgradeCost(building)
 
         return VStack(alignment: .leading, spacing: 10) {
-            PanelHeader(title: def.name, detail: "Lv \(building.level)/\(def.maxLevel)") { ui.clearSelection() }
-            Blurb(text: def.blurb)
+            PanelHeader(title: stage.name, detail: "Stage \(building.stage)/\(def.stages.count)") { ui.clearSelection() }
+            Blurb(text: stage.blurb)
+            Sells(items: stage.sells)
 
-            HStack(spacing: 16) {
-                stat("Makes", "\(Format.compact(rate * 60))/min")
-                if auto {
-                    stat("Keeper", "Collecting")
-                } else {
-                    stat("Holds", Format.compact(capacity))
-                    stat("Waiting", Format.compact(waiting), highlight: game.isFull(building))
+            if building.isRenovating {
+                RenovationProgress(game: game, building: building)
+            } else {
+                HStack(spacing: 16) {
+                    stat("Makes", "\(Format.compact(rate * 60))/min")
+                    if auto {
+                        stat("Keeper", "Collecting")
+                    } else {
+                        stat("Holds", Format.compact(capacity))
+                        stat("Waiting", Format.compact(waiting), highlight: game.isFull(building))
+                    }
                 }
-            }
-            if !auto {
-                ProgressView(value: min(1, waiting / max(1, capacity)))
-                    .tint(game.isFull(building) ? Theme.ember : Theme.lantern)
-            }
-            if let next = Economy.milestoneLevels.first(where: { $0 > building.level }) {
-                Text("Doubles in speed at level \(next).")
-                    .font(Theme.body(12))
-                    .foregroundStyle(Theme.textDim)
+                if !auto {
+                    ProgressView(value: min(1, waiting / max(1, capacity)))
+                        .tint(game.isFull(building) ? Theme.ember : Theme.lantern)
+                }
             }
 
             WorkerSlots(game: game, shop: building, def: def)
             charterRow(def)
 
-            HStack(spacing: 10) {
-                Button("Move") { ui.startMoving(building.id, from: building.origin) }
-                    .buttonStyle(FenButtonStyle())
-                if let upgradeCost {
-                    Button {
-                        if game.upgrade(building.id) { Haptics.build() }
-                    } label: {
-                        CostLabel(verb: "Upgrade", cost: upgradeCost)
-                    }
-                    .buttonStyle(FenButtonStyle(prominent: true))
-                    .disabled(game.state.glimmer < upgradeCost)
-                } else {
-                    Text("Fully upgraded")
-                        .font(Theme.body(14, weight: .semibold))
-                        .foregroundStyle(Theme.moss)
-                        .frame(maxWidth: .infinity)
-                }
+            if !building.isRenovating {
+                NextStageCard(game: game, building: building, def: def)
             }
+
+            Button("Move") { ui.startMoving(building.id, from: building.origin) }
+                .buttonStyle(FenButtonStyle())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .fenPanel()
     }
 
     @ViewBuilder
@@ -243,14 +232,25 @@ struct HousePanel: View {
     let building: PlacedBuilding
 
     var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            ScrollIfNeeded {
+                content
+            }
+            .fenPanel()
+        }
+    }
+
+    private var content: some View {
         let def = game.def(for: building)
+        let stage = game.stageDef(building)
+        let beds = Residents.beds(building, game.content)
         let occupants = Residents.occupants(of: building.id, in: game.state)
             .compactMap { game.content.resident($0.defId) }
-        VStack(alignment: .leading, spacing: 10) {
-            PanelHeader(title: def?.name ?? "House", detail: "\(occupants.count)/\(def?.beds ?? 0) beds") {
+        return VStack(alignment: .leading, spacing: 10) {
+            PanelHeader(title: stage?.name ?? "House", detail: "\(occupants.count)/\(beds) beds") {
                 ui.clearSelection()
             }
-            if let def { Blurb(text: def.blurb) }
+            if let stage { Blurb(text: stage.blurb) }
             if occupants.isEmpty {
                 Blurb(text: "Empty for now. Someone will be along soon.")
             }
@@ -263,11 +263,129 @@ struct HousePanel: View {
                     }
                 }
             }
+            if building.isRenovating {
+                RenovationProgress(game: game, building: building)
+            } else if let def {
+                NextStageCard(game: game, building: building, def: def)
+            }
             Button("Move") { ui.startMoving(building.id, from: building.origin) }
                 .buttonStyle(FenButtonStyle())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .fenPanel()
+    }
+}
+
+/// Shows its content as-is when it fits, or in a scroll view when it's taller than the space available.
+struct ScrollIfNeeded<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView { content }
+                .scrollIndicators(.hidden)
+        }
+    }
+}
+
+/// "Sells: Mossbread · Honey cakes"
+private struct Sells: View {
+    let items: [String]
+    var body: some View {
+        if !items.isEmpty {
+            Text("Sells: " + items.joined(separator: " · "))
+                .font(Theme.body(12, weight: .semibold))
+                .foregroundStyle(Theme.lantern)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// What the next stage is, what it needs, and the button to start renovating.
+private struct NextStageCard: View {
+    let game: Game
+    let building: PlacedBuilding
+    let def: BuildingDef
+
+    var body: some View {
+        if let next = game.nextStage(building) {
+            let unmet = Set(game.unmetRequirements(building))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("NEXT STAGE")
+                    .font(Theme.body(10, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(Theme.textDim)
+                Text(next.name).font(Theme.title(17))
+                Blurb(text: next.blurb)
+                Sells(items: next.sells)
+                if def.kind == .shop {
+                    let now = game.rate(building)
+                    let then = Economy.rate(def, stage: building.stage + 1, workers: game.workers(at: building.id))
+                    Text("Makes \(Format.compact(now * 60))/min → \(Format.compact(then * 60))/min")
+                        .font(Theme.body(12, weight: .semibold))
+                        .foregroundStyle(Theme.moss)
+                } else if next.beds > 0 {
+                    Text("\(Residents.beds(building, game.content)) → \(next.beds) beds")
+                        .font(Theme.body(12, weight: .semibold))
+                        .foregroundStyle(Theme.moss)
+                }
+                ForEach(next.requirements, id: \.self) { r in
+                    let met = !unmet.contains(r)
+                    Label(Requirements.describe(r, game.content),
+                          systemImage: met ? "checkmark.circle.fill" : "circle")
+                        .font(Theme.body(13))
+                        .foregroundStyle(met ? Theme.moss : Theme.textDim)
+                }
+                Button {
+                    if game.startRenovation(building.id) { Haptics.build() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Renovate")
+                        GlimmerIcon(size: 14)
+                        Text(Format.compact(next.cost)).monospacedDigit()
+                        Text("· \(Format.duration(next.buildSeconds))")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(FenButtonStyle(prominent: true))
+                .disabled(!game.canRenovate(building))
+            }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 14).fill(Theme.button.opacity(0.6)))
+        } else if def.stages.count > 1 {
+            Text("Fully built. This is as grand as it gets.")
+                .font(Theme.body(13, weight: .semibold))
+                .foregroundStyle(Theme.moss)
+        }
+    }
+}
+
+/// Countdown while a building is closed for renovation, with a wisp-powered "finish now".
+private struct RenovationProgress: View {
+    let game: Game
+    let building: PlacedBuilding
+
+    var body: some View {
+        if let next = game.nextStage(building), let remaining = game.renovationRemaining(building),
+           let cost = game.finishNowCost(building) {
+            let total = max(1, next.buildSeconds)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Closed for renovation into the \(next.name)")
+                    .font(Theme.body(14, weight: .bold))
+                ProgressView(value: min(1, max(0, 1 - remaining / total)))
+                    .tint(Theme.lantern)
+                Text("\(Format.duration(remaining)) left. It earns nothing until it reopens.")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textDim)
+                Button {
+                    if game.finishRenovationNow(building.id) { Haptics.celebrate() }
+                } label: {
+                    CostLabel(verb: "Finish now", cost: cost, icon: AnyView(WispIcon(size: 14)))
+                }
+                .buttonStyle(FenButtonStyle())
+                .disabled(game.state.wisps < cost)
+            }
+        }
     }
 }
 
@@ -409,8 +527,8 @@ struct BuildMenu: View {
 
     private func detail(_ def: BuildingDef) -> String {
         switch def.kind {
-        case .shop: return "Makes \(Format.compact(Economy.rate(def, level: 1) * 60))/min"
-        case .house: return "\(def.beds) bed\(def.beds == 1 ? "" : "s")"
+        case .shop: return "Sells \(def.stage(1).sells.joined(separator: ", ").lowercased()) · \(Format.compact(Economy.rate(def, stage: 1) * 60))/min"
+        case .house: return "\(def.stage(1).beds) bed\(def.stage(1).beds == 1 ? "" : "s")"
         case .shrine: return "Summon rare residents"
         case .guild: return "Unlocks auto-collect"
         }

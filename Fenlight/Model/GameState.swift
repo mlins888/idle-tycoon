@@ -5,11 +5,16 @@ struct PlacedBuilding: Codable, Identifiable, Hashable {
     let defId: String
     /// Top corner of the footprint.
     var origin: Tile
-    var level: Int
+    /// Which stage the building is at, counting from 1.
+    var stage: Int
     /// Earnings are worked out from this timestamp, which is what makes offline earnings work.
     var lastCollectedAt: Date
     /// Has a Keeper's Charter: its worker collects it automatically.
     var autoCollect: Bool = false
+    /// Set while the building is closed for renovation into the next stage.
+    var renovationEndsAt: Date?
+
+    var isRenovating: Bool { renovationEndsAt != nil }
 }
 
 /// Someone who lives in town.
@@ -23,9 +28,26 @@ struct Resident: Codable, Hashable, Identifiable {
     let arrivedAt: Date
 }
 
+/// Running totals that quests measure progress against.
+struct Stats: Codable, Equatable {
+    /// Glimmer collected, per building id, plus "*" for all shops together.
+    var collected: [String: Double] = [:]
+    var chunksCleansed: Int = 0
+
+    static let anyShop = "*"
+}
+
+extension Stats {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        collected = try c.decodeIfPresent([String: Double].self, forKey: .collected) ?? [:]
+        chunksCleansed = try c.decodeIfPresent(Int.self, forKey: .chunksCleansed) ?? 0
+    }
+}
+
 /// Everything that gets saved. Kept as plain data so it can be encoded and tested easily.
 struct GameState: Codable, Equatable {
-    static let currentVersion = 2
+    static let currentVersion = 3
 
     var version: Int = GameState.currentVersion
     var glimmer: Double
@@ -45,15 +67,21 @@ struct GameState: Codable, Equatable {
     /// The highest level that has already paid out its wisps.
     var rewardedLevel: Int = 1
 
+    // Added in version 3.
+    var stats = Stats()
+    /// Quests in progress, with the counter value when each started (for "collect N more" goals).
+    var activeQuests: [String: Double] = [:]
+    var completedQuests: Set<String> = []
+
     static func newGame(now: Date) -> GameState {
         GameState(
             glimmer: 60,
             xp: 0,
             buildings: [
                 PlacedBuilding(id: 1, defId: "reed_candles", origin: Tile(c: 11, r: 11),
-                               level: 1, lastCollectedAt: now),
+                               stage: 1, lastCollectedAt: now),
                 PlacedBuilding(id: 2, defId: "reed_cottage", origin: Tile(c: 9, r: 12),
-                               level: 1, lastCollectedAt: now),
+                               stage: 1, lastCollectedAt: now),
             ],
             cleansedChunks: World.startingChunks,
             nextBuildingId: 3,
@@ -66,14 +94,24 @@ struct GameState: Codable, Equatable {
 // Decoding by hand so saves from older versions (missing the newer fields) still load.
 
 extension PlacedBuilding {
+    private enum LegacyKeys: String, CodingKey { case level }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(Int.self, forKey: .id)
         defId = try c.decode(String.self, forKey: .defId)
         origin = try c.decode(Tile.self, forKey: .origin)
-        level = try c.decode(Int.self, forKey: .level)
         lastCollectedAt = try c.decode(Date.self, forKey: .lastCollectedAt)
         autoCollect = try c.decodeIfPresent(Bool.self, forKey: .autoCollect) ?? false
+        renovationEndsAt = try c.decodeIfPresent(Date.self, forKey: .renovationEndsAt)
+        if let stage = try c.decodeIfPresent(Int.self, forKey: .stage) {
+            self.stage = stage
+        } else {
+            // Before version 3 buildings had levels 1–10. Map them onto stages
+            // (`Game` clamps this to however many stages the building has).
+            let level = try decoder.container(keyedBy: LegacyKeys.self).decodeIfPresent(Int.self, forKey: .level) ?? 1
+            self.stage = level >= 10 ? 3 : level >= 5 ? 2 : 1
+        }
     }
 }
 
@@ -94,5 +132,8 @@ extension GameState {
             ?? (UInt64(savedAt.timeIntervalSinceReferenceDate * 1000) | 1)
         rewardedLevel = try c.decodeIfPresent(Int.self, forKey: .rewardedLevel)
             ?? Economy.level(forXP: xp)
+        stats = try c.decodeIfPresent(Stats.self, forKey: .stats) ?? Stats()
+        activeQuests = try c.decodeIfPresent([String: Double].self, forKey: .activeQuests) ?? [:]
+        completedQuests = try c.decodeIfPresent(Set<String>.self, forKey: .completedQuests) ?? []
     }
 }

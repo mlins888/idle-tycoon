@@ -1,174 +1,815 @@
 [
   {
     "id": "reed_candles",
-    "name": "Rushlight Stall",
-    "blurb": "Reeds dipped in tallow. The first light the fen has seen in years.",
     "kind": "shop",
     "size": 1,
     "cost": 25,
     "unlockLevel": 1,
-    "baseRate": 0.5,
-    "capSeconds": 300,
     "xp": 5,
-    "maxLevel": 10,
-    "color": "#E8B04A"
+    "color": "#E8B04A",
+    "stages": [
+      {
+        "name": "Rushlight Stall",
+        "blurb": "Reeds dipped in tallow. The first light the fen has seen in years.",
+        "sells": [
+          "Rushlights"
+        ],
+        "rate": 0.5,
+        "capSeconds": 300
+      },
+      {
+        "name": "Chandler's Shop",
+        "blurb": "Wren's stall grows a roof, a counter and a proper sign.",
+        "sells": [
+          "Rushlights",
+          "Beeswax tapers"
+        ],
+        "rate": 1.5,
+        "capSeconds": 450,
+        "cost": 150,
+        "buildSeconds": 300,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 2
+          },
+          {
+            "type": "quest",
+            "quest": "first_light"
+          }
+        ]
+      },
+      {
+        "name": "Glimmerwick Chandlery",
+        "blurb": "Candles that burn with a little captured wisp-light. They never quite go out.",
+        "sells": [
+          "Rushlights",
+          "Beeswax tapers",
+          "Wisp-wick lanterns"
+        ],
+        "rate": 4.5,
+        "capSeconds": 600,
+        "cost": 2500,
+        "buildSeconds": 3600,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 5
+          },
+          {
+            "type": "resident",
+            "resident": "wick"
+          },
+          {
+            "type": "building",
+            "building": "lantern_works",
+            "stage": 1
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mossbread",
-    "name": "Mossbread Bakery",
-    "blurb": "A hedge-witch bakes loaves that taste faintly of rain.",
     "kind": "shop",
     "size": 2,
     "cost": 150,
     "unlockLevel": 1,
-    "baseRate": 2,
-    "capSeconds": 600,
     "xp": 15,
-    "maxLevel": 10,
-    "color": "#C9814B"
+    "color": "#C9814B",
+    "stages": [
+      {
+        "name": "Mossbread Oven",
+        "blurb": "A stone oven in the open air. The bread tastes faintly of rain.",
+        "sells": [
+          "Mossbread"
+        ],
+        "rate": 2,
+        "capSeconds": 600
+      },
+      {
+        "name": "Mossbread Bakery",
+        "blurb": "Walls, a window seat, and a smell that brings the whole town in.",
+        "sells": [
+          "Mossbread",
+          "Honey cakes"
+        ],
+        "rate": 6,
+        "capSeconds": 900,
+        "cost": 900,
+        "buildSeconds": 900,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 3
+          },
+          {
+            "type": "resident",
+            "resident": "marigold"
+          },
+          {
+            "type": "quest",
+            "quest": "ovens_warm"
+          }
+        ]
+      },
+      {
+        "name": "Bogberry Patisserie",
+        "blurb": "Three tiers of cake in the window and a queue out the door.",
+        "sells": [
+          "Mossbread",
+          "Honey cakes",
+          "Bogberry tarts"
+        ],
+        "rate": 18,
+        "capSeconds": 1200,
+        "cost": 12000,
+        "buildSeconds": 7200,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 6
+          },
+          {
+            "type": "building",
+            "building": "toadstool_tea",
+            "stage": 2
+          },
+          {
+            "type": "quest",
+            "quest": "a_proper_cake"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "eel_smoker",
+    "kind": "shop",
+    "size": 1,
+    "cost": 300,
+    "unlockLevel": 2,
+    "xp": 10,
+    "color": "#8A7A5A",
+    "stages": [
+      {
+        "name": "Eel-Smoker's Rack",
+        "blurb": "A drying rack over a peat fire. Smells like home, if home was a swamp.",
+        "sells": [
+          "Smoked eel"
+        ],
+        "rate": 3,
+        "capSeconds": 600
+      },
+      {
+        "name": "Eel-Smoker's Jetty",
+        "blurb": "A jetty of its own, with a smokehouse and a pie oven.",
+        "sells": [
+          "Smoked eel",
+          "Eel pies"
+        ],
+        "rate": 9,
+        "capSeconds": 900,
+        "cost": 1800,
+        "buildSeconds": 1200,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "ottoline"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "toadstool_tea",
-    "name": "Toadstool Teahouse",
-    "blurb": "Frog-folk regulars argue about the weather over mushroom tea.",
     "kind": "shop",
     "size": 2,
     "cost": 600,
     "unlockLevel": 2,
-    "baseRate": 6,
-    "capSeconds": 900,
     "xp": 30,
-    "maxLevel": 10,
-    "color": "#C8546B"
+    "color": "#C8546B",
+    "stages": [
+      {
+        "name": "Tea Cart",
+        "blurb": "A cart under a giant toadstool. Regulars argue about the weather.",
+        "sells": [
+          "Mushroom tea"
+        ],
+        "rate": 6,
+        "capSeconds": 900
+      },
+      {
+        "name": "Toadstool Teahouse",
+        "blurb": "The toadstool now has a door, two floors and a very small chimney.",
+        "sells": [
+          "Mushroom tea",
+          "Reed biscuits"
+        ],
+        "rate": 18,
+        "capSeconds": 1200,
+        "cost": 3000,
+        "buildSeconds": 1800,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 4
+          },
+          {
+            "type": "resident",
+            "resident": "dunstan"
+          },
+          {
+            "type": "quest",
+            "quest": "tea_time"
+          }
+        ]
+      },
+      {
+        "name": "Grand Toadstool Tearoom",
+        "blurb": "Lanterns in the gills, cordials on ice, and frog-folk in their best waistcoats.",
+        "sells": [
+          "Mushroom tea",
+          "Reed biscuits",
+          "Rainwater cordials"
+        ],
+        "rate": 54,
+        "capSeconds": 1800,
+        "cost": 40000,
+        "buildSeconds": 10800,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 7
+          },
+          {
+            "type": "quest",
+            "quest": "tea_for_the_court"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "herb_garden",
+    "kind": "shop",
+    "size": 2,
+    "cost": 1200,
+    "unlockLevel": 3,
+    "xp": 30,
+    "color": "#5E8F4A",
+    "stages": [
+      {
+        "name": "Peat Garden",
+        "blurb": "Raised beds of bogbean and sundew, carefully kept out of the murk.",
+        "sells": [
+          "Bogbean",
+          "Sundew"
+        ],
+        "rate": 9,
+        "capSeconds": 1800
+      },
+      {
+        "name": "Peat & Herb Garden",
+        "blurb": "A glasshouse and a mushroom cellar join the beds.",
+        "sells": [
+          "Bogbean",
+          "Sundew",
+          "Lantern mushrooms"
+        ],
+        "rate": 27,
+        "capSeconds": 2400,
+        "cost": 7000,
+        "buildSeconds": 1800,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "hazel"
+          },
+          {
+            "type": "quest",
+            "quest": "seeds_from_hazel"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "ferry_dock",
-    "name": "Ferry Landing",
-    "blurb": "A heron-folk ferrier poles travellers across the black water.",
     "kind": "shop",
     "size": 2,
     "cost": 2500,
     "unlockLevel": 3,
-    "baseRate": 18,
-    "capSeconds": 1200,
     "xp": 60,
-    "maxLevel": 10,
-    "color": "#4E8C7A"
+    "color": "#4E8C7A",
+    "stages": [
+      {
+        "name": "Ferry Landing",
+        "blurb": "A heron-folk ferrier poles travellers across the black water.",
+        "sells": [
+          "Crossings"
+        ],
+        "rate": 18,
+        "capSeconds": 1200
+      },
+      {
+        "name": "Ferry Wharf",
+        "blurb": "A proper wharf with cargo cranes and a ticket hut.",
+        "sells": [
+          "Crossings",
+          "Cargo runs"
+        ],
+        "rate": 54,
+        "capSeconds": 1500,
+        "cost": 12000,
+        "buildSeconds": 2700,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "old_bramble"
+          },
+          {
+            "type": "quest",
+            "quest": "bramble_ferry"
+          }
+        ]
+      },
+      {
+        "name": "Bellwater Ferry Company",
+        "blurb": "Painted barges, a fleet of three and moonlit tours of the restored fen.",
+        "sells": [
+          "Crossings",
+          "Cargo runs",
+          "Moonlit tours"
+        ],
+        "rate": 160,
+        "capSeconds": 2400,
+        "cost": 150000,
+        "buildSeconds": 14400,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 8
+          },
+          {
+            "type": "restoration",
+            "percent": 40
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "apothecary",
-    "name": "Bogbean Apothecary",
-    "blurb": "Remedies for murk-cough, heartache and bad luck.",
     "kind": "shop",
     "size": 2,
     "cost": 9000,
     "unlockLevel": 4,
-    "baseRate": 50,
-    "capSeconds": 1800,
     "xp": 110,
-    "maxLevel": 10,
-    "color": "#7C5BA6"
+    "color": "#7C5BA6",
+    "stages": [
+      {
+        "name": "Herb Stall",
+        "blurb": "Bundles of drying herbs and one very confident hare-folk.",
+        "sells": [
+          "Murk-cough tonic"
+        ],
+        "rate": 50,
+        "capSeconds": 1800
+      },
+      {
+        "name": "Bogbean Apothecary",
+        "blurb": "Shelves of labelled jars. Labelled twice.",
+        "sells": [
+          "Tonics",
+          "Poultices"
+        ],
+        "rate": 150,
+        "capSeconds": 2400,
+        "cost": 40000,
+        "buildSeconds": 3600,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "hazel"
+          },
+          {
+            "type": "building",
+            "building": "herb_garden",
+            "stage": 1
+          }
+        ]
+      },
+      {
+        "name": "Hedgewitch's Dispensary",
+        "blurb": "Remedies for murk-cough, heartache and bad luck, all under one crooked roof.",
+        "sells": [
+          "Tonics",
+          "Poultices",
+          "Luck charms"
+        ],
+        "rate": 450,
+        "capSeconds": 3600,
+        "cost": 500000,
+        "buildSeconds": 14400,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 9
+          },
+          {
+            "type": "quest",
+            "quest": "remedy_for_the_fen"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lantern_works",
-    "name": "Lantern Works",
-    "blurb": "An elf lamplighter rebuilds the lanterns the Thief took.",
     "kind": "shop",
     "size": 2,
     "cost": 35000,
     "unlockLevel": 5,
-    "baseRate": 160,
-    "capSeconds": 2400,
     "xp": 200,
-    "maxLevel": 10,
-    "color": "#F2C14E"
+    "color": "#F2C14E",
+    "stages": [
+      {
+        "name": "Lantern Repair Bench",
+        "blurb": "An elf lamplighter mends the lanterns the Thief left broken.",
+        "sells": [
+          "Mended lanterns"
+        ],
+        "rate": 160,
+        "capSeconds": 2400
+      },
+      {
+        "name": "Lantern Works",
+        "blurb": "Forges and glass, and new lanterns going up all over town.",
+        "sells": [
+          "Mended lanterns",
+          "New lanterns"
+        ],
+        "rate": 480,
+        "capSeconds": 3000,
+        "cost": 150000,
+        "buildSeconds": 5400,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "ilsabet"
+          },
+          {
+            "type": "quest",
+            "quest": "ilsabets_trail"
+          }
+        ]
+      },
+      {
+        "name": "Grand Lanternworks",
+        "blurb": "A beacon tower rises over the workshop. It's not finished yet. Neither is the story.",
+        "sells": [
+          "Lanterns",
+          "Street lamps",
+          "Beacon parts"
+        ],
+        "rate": 1450,
+        "capSeconds": 3600,
+        "cost": 2000000,
+        "buildSeconds": 21600,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 10
+          },
+          {
+            "type": "quest",
+            "quest": "the_thiefs_trail"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "glassblower",
+    "kind": "shop",
+    "size": 2,
+    "cost": 15000,
+    "unlockLevel": 5,
+    "xp": 150,
+    "color": "#6FB7C8",
+    "stages": [
+      {
+        "name": "Bog-Glass Kiln",
+        "blurb": "Green glass from fen sand. Every bottle comes out a little wobbly.",
+        "sells": [
+          "Bottles"
+        ],
+        "rate": 90,
+        "capSeconds": 2400
+      },
+      {
+        "name": "Will-o'-Glass Blower",
+        "blurb": "Glass jars that hold a wisp's glow for a week.",
+        "sells": [
+          "Bottles",
+          "Wisp jars"
+        ],
+        "rate": 270,
+        "capSeconds": 3000,
+        "cost": 80000,
+        "buildSeconds": 3600,
+        "requirements": [
+          {
+            "type": "building",
+            "building": "lantern_works",
+            "stage": 1
+          }
+        ]
+      },
+      {
+        "name": "Starglass Atelier",
+        "blurb": "Stained windows for every house in Fenlight.",
+        "sells": [
+          "Bottles",
+          "Wisp jars",
+          "Stained windows"
+        ],
+        "rate": 810,
+        "capSeconds": 3600,
+        "cost": 900000,
+        "buildSeconds": 14400,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 9
+          },
+          {
+            "type": "resident",
+            "resident": "nettle_burr"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bookbinder",
+    "kind": "shop",
+    "size": 1,
+    "cost": 60000,
+    "unlockLevel": 6,
+    "xp": 250,
+    "color": "#8C6A4A",
+    "stages": [
+      {
+        "name": "Bookbinder's Nook",
+        "blurb": "Waterlogged books, carefully dried and rebound.",
+        "sells": [
+          "Mended books"
+        ],
+        "rate": 300,
+        "capSeconds": 3600
+      },
+      {
+        "name": "Fen Archive",
+        "blurb": "Shelves to the rafters, and the first true maps of the fen.",
+        "sells": [
+          "Books",
+          "Maps of the fen"
+        ],
+        "rate": 900,
+        "capSeconds": 3600,
+        "cost": 350000,
+        "buildSeconds": 7200,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "fennimore"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mothsilk",
-    "name": "Mothsilk Tailor",
-    "blurb": "Moth-winged fae weave cloth that shimmers in the dark.",
     "kind": "shop",
     "size": 2,
     "cost": 120000,
     "unlockLevel": 6,
-    "baseRate": 450,
-    "capSeconds": 3600,
     "xp": 350,
-    "maxLevel": 10,
-    "color": "#B9A4D8"
+    "color": "#B9A4D8",
+    "stages": [
+      {
+        "name": "Mothsilk Loom",
+        "blurb": "Moth-winged fae weave cloth that shimmers in the dark.",
+        "sells": [
+          "Mothsilk thread"
+        ],
+        "rate": 450,
+        "capSeconds": 3600
+      },
+      {
+        "name": "Mothsilk Tailor",
+        "blurb": "Cloaks, scarves and lantern-light gowns.",
+        "sells": [
+          "Mothsilk thread",
+          "Cloaks",
+          "Gowns"
+        ],
+        "rate": 1350,
+        "capSeconds": 3600,
+        "cost": 600000,
+        "buildSeconds": 7200,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "sorrel"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "bellwater_inn",
-    "name": "Bellwater Inn",
-    "blurb": "Every kind of folk under one mossy roof. The heart of a restored town.",
     "kind": "shop",
     "size": 3,
     "cost": 500000,
     "unlockLevel": 8,
-    "baseRate": 1500,
-    "capSeconds": 3600,
     "xp": 700,
-    "maxLevel": 10,
-    "color": "#5C7FB0"
+    "color": "#5C7FB0",
+    "stages": [
+      {
+        "name": "Bellwater Tavern",
+        "blurb": "Every kind of folk under one mossy roof.",
+        "sells": [
+          "Cider",
+          "Stew"
+        ],
+        "rate": 1500,
+        "capSeconds": 3600
+      },
+      {
+        "name": "Bellwater Inn",
+        "blurb": "Rooms upstairs, a bell on the door, and a fire that never goes out.",
+        "sells": [
+          "Cider",
+          "Stew",
+          "Rooms"
+        ],
+        "rate": 4500,
+        "capSeconds": 3600,
+        "cost": 2500000,
+        "buildSeconds": 14400,
+        "requirements": [
+          {
+            "type": "resident",
+            "resident": "bodkin"
+          }
+        ]
+      },
+      {
+        "name": "Bellwater Grand Hall",
+        "blurb": "The heart of a restored town. Feasts every night.",
+        "sells": [
+          "Cider",
+          "Stew",
+          "Rooms",
+          "Feasts"
+        ],
+        "rate": 13500,
+        "capSeconds": 5400,
+        "cost": 30000000,
+        "buildSeconds": 28800,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 12
+          },
+          {
+            "type": "restoration",
+            "percent": 60
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "reed_cottage",
-    "name": "Reed Cottage",
-    "blurb": "A one-room hut on stilts. Snug, if a little damp.",
     "kind": "house",
     "size": 1,
     "cost": 40,
     "unlockLevel": 1,
     "xp": 5,
-    "beds": 1,
-    "color": "#A7744A"
+    "color": "#A7744A",
+    "stages": [
+      {
+        "name": "Reed Cottage",
+        "blurb": "A one-room hut on stilts. Snug, if a little damp.",
+        "beds": 1
+      },
+      {
+        "name": "Reed House",
+        "blurb": "A second room and a dry floor.",
+        "beds": 2,
+        "cost": 300,
+        "buildSeconds": 600,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 2
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "stilt_house",
-    "name": "Stilt House",
-    "blurb": "Three bunks above the waterline and a porch for frog-watching.",
     "kind": "house",
     "size": 2,
     "cost": 400,
     "unlockLevel": 2,
     "xp": 20,
-    "beds": 3,
-    "color": "#6E8B6A"
+    "color": "#6E8B6A",
+    "stages": [
+      {
+        "name": "Stilt House",
+        "blurb": "Three bunks above the waterline and a porch for frog-watching.",
+        "beds": 3
+      },
+      {
+        "name": "Stilt Terrace",
+        "blurb": "Connected houses with rope bridges between them.",
+        "beds": 5,
+        "cost": 4000,
+        "buildSeconds": 1800,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 5
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "willow_lodge",
-    "name": "Willow Lodge",
-    "blurb": "A rambling lodge woven into a living willow.",
     "kind": "house",
     "size": 2,
     "cost": 5000,
     "unlockLevel": 5,
     "xp": 80,
-    "beds": 5,
-    "color": "#8A9A5B"
+    "color": "#8A9A5B",
+    "stages": [
+      {
+        "name": "Willow Lodge",
+        "blurb": "A rambling lodge woven into a living willow.",
+        "beds": 5
+      },
+      {
+        "name": "Great Willow",
+        "blurb": "The willow has grown. So has the lodge.",
+        "beds": 8,
+        "cost": 60000,
+        "buildSeconds": 7200,
+        "requirements": [
+          {
+            "type": "level",
+            "level": 8
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "wisp_shrine",
-    "name": "Wisp Shrine",
-    "blurb": "Offer wisps here to call rare folk out of the deep fen.",
     "kind": "shrine",
     "size": 2,
     "cost": 300,
     "unlockLevel": 2,
     "xp": 25,
     "unique": true,
-    "color": "#6FD6C8"
+    "color": "#6FD6C8",
+    "stages": [
+      {
+        "name": "Wisp Shrine",
+        "blurb": "Offer wisps here to call rare folk out of the deep fen."
+      }
+    ]
   },
   {
     "id": "lamplighters_guild",
-    "name": "Lamplighters' Guild",
-    "blurb": "Grants Keeper's Charters, so your workers can collect for you.",
     "kind": "guild",
     "size": 2,
     "cost": 50000,
     "unlockLevel": 7,
     "xp": 300,
     "unique": true,
-    "color": "#D9A441"
+    "color": "#D9A441",
+    "stages": [
+      {
+        "name": "Lamplighters' Guild",
+        "blurb": "Grants Keeper's Charters, so your workers can collect for you."
+      }
+    ]
   }
 ]

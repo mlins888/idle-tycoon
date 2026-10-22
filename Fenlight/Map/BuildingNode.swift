@@ -12,6 +12,9 @@ final class BuildingNode: SKNode {
     private var shownFull = false
     private let badges = SKNode()
     private let keeperLantern = SKShapeNode(circleOfRadius: 8)
+    private let scaffold = SKNode()
+    private let scaffoldLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+    private var shownTexture: SKTexture?
 
     init(buildingId: Int, texture: SKTexture) {
         self.buildingId = buildingId
@@ -55,6 +58,77 @@ final class BuildingNode: SKNode {
         let flicker = SKAction.sequence([.fadeAlpha(to: 0.7, duration: 0.8), .fadeAlpha(to: 1, duration: 0.8)])
         keeperLantern.run(.repeatForever(flicker))
         addChild(keeperLantern)
+
+        scaffold.zPosition = 2
+        scaffold.isHidden = true
+        addChild(scaffold)
+        scaffoldLabel.fontSize = 15
+        scaffoldLabel.fontColor = UIColor(hex: "#FFF8E6")
+        scaffoldLabel.verticalAlignmentMode = .center
+
+        shownTexture = texture
+        layoutAroundSprite()
+    }
+
+    /// Swaps the picture (e.g. when a building reaches a new stage) and moves the bubble and badges to fit.
+    func setTexture(_ texture: SKTexture) {
+        guard texture !== shownTexture else { return }
+        shownTexture = texture
+        sprite.texture = texture
+        sprite.size = texture.size()
+        layoutAroundSprite()
+    }
+
+    private func layoutAroundSprite() {
+        let w = sprite.size.width, h = sprite.size.height
+        bubble.removeAction(forKey: "bob")
+        shownFull = false
+        bubble.position = CGPoint(x: 0, y: h + 14)
+        badges.position = CGPoint(x: -w * 0.3, y: h * 0.55)
+        keeperLantern.position = CGPoint(x: 0, y: h + 12)
+        buildScaffold(width: w, height: h)
+    }
+
+    /// Placeholder scaffolding: a dark frame with crossed planks over the building.
+    private func buildScaffold(width w: CGFloat, height h: CGFloat) {
+        scaffold.removeAllChildren()
+        let frame = CGRect(x: -w * 0.38, y: h * 0.08, width: w * 0.76, height: h * 0.8)
+        let shade = SKShapeNode(rect: frame, cornerRadius: 6)
+        shade.fillColor = UIColor(hex: "#1D1A24").withAlphaComponent(0.55)
+        shade.strokeColor = UIColor(hex: "#B08850")
+        shade.lineWidth = 4
+        scaffold.addChild(shade)
+        let planks = CGMutablePath()
+        let steps = 3
+        for i in 0...steps {
+            let y = frame.minY + frame.height * CGFloat(i) / CGFloat(steps)
+            planks.move(to: CGPoint(x: frame.minX, y: y))
+            planks.addLine(to: CGPoint(x: frame.maxX, y: y))
+        }
+        planks.move(to: CGPoint(x: frame.minX, y: frame.minY))
+        planks.addLine(to: CGPoint(x: frame.maxX, y: frame.maxY))
+        planks.move(to: CGPoint(x: frame.maxX, y: frame.minY))
+        planks.addLine(to: CGPoint(x: frame.minX, y: frame.maxY))
+        let lines = SKShapeNode(path: planks)
+        lines.strokeColor = UIColor(hex: "#B08850")
+        lines.lineWidth = 3
+        scaffold.addChild(lines)
+
+        let tag = SKShapeNode(rect: CGRect(x: -44, y: -14, width: 88, height: 28), cornerRadius: 14)
+        tag.fillColor = UIColor(hex: "#1D1A24")
+        tag.strokeColor = UIColor(hex: "#F2B544")
+        tag.lineWidth = 2
+        tag.position = CGPoint(x: 0, y: frame.maxY + 18)
+        scaffold.addChild(tag)
+        scaffoldLabel.removeFromParent()
+        scaffoldLabel.position = tag.position
+        scaffold.addChild(scaffoldLabel)
+    }
+
+    /// Shows scaffolding and a countdown while renovating; hides it otherwise.
+    func showRenovation(remaining: TimeInterval?) {
+        scaffold.isHidden = remaining == nil
+        if let remaining { scaffoldLabel.text = Format.duration(remaining) }
     }
 
     /// A small coloured dot per worker, plus a glowing lantern when a keeper collects automatically.

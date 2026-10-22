@@ -2,14 +2,13 @@ import XCTest
 @testable import Fenlight
 
 private func shop(_ id: String, rate: Double, cap: Double = 100, size: Int = 1, cost: Double = 10) -> BuildingDef {
-    BuildingDef(id: id, name: id, blurb: "", kind: .shop, size: size, cost: cost, unlockLevel: 1,
-                baseRate: rate, capSeconds: cap, xp: 1, maxLevel: 10, color: "#FFFFFF")
+    BuildingDef(id: id, kind: .shop, size: size, cost: cost, unlockLevel: 1, xp: 1, color: "#FFFFFF",
+                stages: [StageDef(name: id, blurb: "", rate: rate, capSeconds: cap)])
 }
 
 private func other(_ id: String, _ kind: BuildingKind, beds: Int = 0, unique: Bool = false) -> BuildingDef {
-    BuildingDef(id: id, name: id, blurb: "", kind: kind, size: kind == .house && beds == 1 ? 1 : 2, cost: 10,
-                unlockLevel: 1, baseRate: 0, capSeconds: 0, xp: 1, maxLevel: 1, color: "#FFFFFF",
-                beds: beds, unique: unique)
+    BuildingDef(id: id, kind: kind, size: kind == .house && beds == 1 ? 1 : 2, cost: 10, unlockLevel: 1, xp: 1,
+                color: "#FFFFFF", stages: [StageDef(name: id, blurb: "", beds: beds)], unique: unique)
 }
 
 private func person(_ id: String, _ arrival: ArrivalKind, rarity: Rarity = .common, level: Int = 1,
@@ -62,7 +61,7 @@ final class ArrivalTests: XCTestCase {
     func testStoryResidentMovesInWhenThereIsABed() {
         let game = makeGame(TestTime())
         XCTAssertNotNil(game.resident("wren"), "the starting cottage has a bed for Wren")
-        XCTAssertEqual(game.arrivalQueue.map(\.id), ["wren"])
+        XCTAssertEqual(game.announcements.map(\.id), ["arrival-wren"])
         XCTAssertEqual(game.freeBeds, 0)
         XCTAssertNil(game.state.nextWandererAt, "no bed, so no one is on the road")
     }
@@ -117,7 +116,7 @@ final class ArrivalTests: XCTestCase {
         let game = Game(content: content, state: saved, clock: time.clock)
         let arrivals = game.awaySummary?.arrivals.map(\.id).sorted()
         XCTAssertEqual(arrivals, ["marigold", "pip"], "both wanderers arrived while away")
-        XCTAssertTrue(game.arrivalQueue.isEmpty, "the summary introduces them instead of separate cards")
+        XCTAssertTrue(game.announcements.isEmpty, "the summary introduces them instead of separate cards")
         XCTAssertNil(game.state.nextWandererAt, "no wanderers left to come")
     }
 }
@@ -209,12 +208,6 @@ final class WorkerTests: XCTestCase {
         XCTAssertEqual(game.state.glimmer, 10, accuracy: 0.001, "earned at the old rate")
         XCTAssertEqual(game.pending(game.state.buildings[0]), 0)
     }
-
-    func testMilestoneLevelsDoubleSpeed() {
-        let def = shop("x", rate: 1)
-        XCTAssertEqual(Economy.rate(def, level: 5), pow(1.45, 4) * 2, accuracy: 0.0001)
-        XCTAssertEqual(Economy.rate(def, level: 10), pow(1.45, 9) * 4, accuracy: 0.0001)
-    }
 }
 
 @MainActor
@@ -287,11 +280,18 @@ final class WispAndSaveTests: XCTestCase {
         var old = GameState.newGame(now: Date(timeIntervalSinceReferenceDate: 500))
         old.version = 1
         var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
-        for key in ["residents", "wisps", "nextWandererAt", "rngState", "rewardedLevel"] {
+        for key in ["residents", "wisps", "nextWandererAt", "rngState", "rewardedLevel",
+                    "stats", "activeQuests", "completedQuests"] {
             json[key] = nil
         }
+        // Version 1 and 2 saves had levels instead of stages.
         var buildings = try XCTUnwrap(json["buildings"] as? [[String: Any]])
-        for i in buildings.indices { buildings[i]["autoCollect"] = nil }
+        for i in buildings.indices {
+            buildings[i]["autoCollect"] = nil
+            buildings[i]["stage"] = nil
+            buildings[i]["level"] = 1
+        }
+        buildings[0]["level"] = 7
         json["buildings"] = buildings
 
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
@@ -304,5 +304,7 @@ final class WispAndSaveTests: XCTestCase {
         XCTAssertEqual(loaded.wisps, 0)
         XCTAssertFalse(loaded.buildings.contains(where: \.autoCollect))
         XCTAssertEqual(loaded.glimmer, old.glimmer)
+        XCTAssertEqual(loaded.buildings.map(\.stage), [2, 1], "level 7 → stage 2, level 1 → stage 1")
+        XCTAssertTrue(loaded.completedQuests.isEmpty)
     }
 }

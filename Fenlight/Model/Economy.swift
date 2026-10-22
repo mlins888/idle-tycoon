@@ -1,35 +1,24 @@
 import Foundation
 
 /// All balance formulas live here so they can be tuned and tested in one place.
+/// Per-building numbers (earning rates, renovation costs and times) live in `buildings.json`.
 enum Economy {
     // MARK: Shops
-
-    /// Shop levels that double that shop's speed.
-    static let milestoneLevels = [5, 10]
-
-    static func milestoneMultiplier(level: Int) -> Double {
-        milestoneLevels.reduce(1) { level >= $1 ? $0 * 2 : $0 }
-    }
-
-    /// Glimmer per second for a shop at `level`, before worker bonuses.
-    static func rate(_ def: BuildingDef, level: Int) -> Double {
-        def.baseRate * pow(1.45, Double(level - 1)) * milestoneMultiplier(level: level)
-    }
 
     /// Bonus a worker adds to a shop's rate (0.25 = +25%).
     static func workerBonus(isFavorite: Bool) -> Double {
         isFavorite ? 0.6 : 0.25
     }
 
-    /// Glimmer per second for a shop including its workers' bonuses.
-    static func rate(_ def: BuildingDef, level: Int, workers: [ResidentDef]) -> Double {
+    /// Glimmer per second for a shop at `stage`, including its workers' bonuses.
+    static func rate(_ def: BuildingDef, stage: Int, workers: [ResidentDef] = []) -> Double {
         let bonus = workers.reduce(0) { $0 + workerBonus(isFavorite: $1.favoriteShop == def.id) }
-        return rate(def, level: level) * (1 + bonus)
+        return def.stage(stage).rate * (1 + bonus)
     }
 
     /// How much a shop holds before it's full, given its current rate.
-    static func capacity(rate: Double, _ def: BuildingDef) -> Double {
-        rate * def.capSeconds
+    static func capacity(rate: Double, _ stage: StageDef) -> Double {
+        rate * stage.capSeconds
     }
 
     /// Glimmer waiting in a shop right now. Grows with time and stops at capacity.
@@ -43,8 +32,11 @@ enum Economy {
         (def.cost * pow(1.35, Double(owned))).rounded()
     }
 
-    static func upgradeCost(_ def: BuildingDef, level: Int) -> Double {
-        (def.cost * 0.6 * pow(1.8, Double(level))).rounded()
+    // MARK: Renovation
+
+    /// Wisps to finish a renovation right away: one per 10 minutes left (at least one).
+    static func finishNowCost(remaining: TimeInterval) -> Double {
+        max(1, (remaining / 600).rounded(.up))
     }
 
     // MARK: Auto-collect

@@ -2,13 +2,15 @@ import XCTest
 @testable import Fenlight
 
 /// A small fixed set of buildings so tests don't depend on balance changes in buildings.json.
+private func testShop(_ id: String, size: Int, cost: Double, unlock: Int, rate: Double, cap: Double) -> BuildingDef {
+    BuildingDef(id: id, kind: .shop, size: size, cost: cost, unlockLevel: unlock, xp: 5, color: "#FFFFFF",
+                stages: [StageDef(name: id, blurb: "", rate: rate, capSeconds: cap)])
+}
+
 private let testContent = GameContent(buildings: [
-    BuildingDef(id: "reed_candles", name: "Stall", blurb: "", kind: .shop, size: 1, cost: 25,
-                unlockLevel: 1, baseRate: 1, capSeconds: 100, xp: 5, maxLevel: 10, color: "#FFFFFF"),
-    BuildingDef(id: "bakery", name: "Bakery", blurb: "", kind: .shop, size: 2, cost: 100,
-                unlockLevel: 1, baseRate: 2, capSeconds: 50, xp: 10, maxLevel: 3, color: "#FFFFFF"),
-    BuildingDef(id: "inn", name: "Inn", blurb: "", kind: .shop, size: 3, cost: 10,
-                unlockLevel: 5, baseRate: 5, capSeconds: 50, xp: 10, maxLevel: 10, color: "#FFFFFF"),
+    testShop("reed_candles", size: 1, cost: 25, unlock: 1, rate: 1, cap: 100),
+    testShop("bakery", size: 2, cost: 100, unlock: 1, rate: 2, cap: 50),
+    testShop("inn", size: 3, cost: 10, unlock: 5, rate: 5, cap: 50),
 ])
 
 /// A clock the test controls.
@@ -71,30 +73,6 @@ final class EconomyTests: XCTestCase {
         let summary = try? XCTUnwrap(game.awaySummary)
         XCTAssertEqual(summary?.duration ?? 0, 7200, accuracy: 0.001)
         XCTAssertEqual(summary?.waiting ?? 0, 100, accuracy: 0.001, "capped at the stall's capacity")
-    }
-
-    func testUpgradeCollectsFirstThenRaisesTheRate() {
-        let time = TestTime()
-        let game = makeGame(time: time, glimmer: 1_000)
-        time.advance(10)
-        let cost = game.upgradeCost(game.state.buildings[0])!
-
-        XCTAssertTrue(game.upgrade(1))
-        XCTAssertEqual(game.state.glimmer, 1_000 + 10 - cost, accuracy: 0.001)
-        XCTAssertEqual(game.state.buildings[0].level, 2)
-        time.advance(10)
-        XCTAssertEqual(game.pending(game.state.buildings[0]), 14.5, accuracy: 0.001)
-    }
-
-    func testCannotUpgradePastMaxLevel() {
-        let time = TestTime()
-        let game = makeGame(time: time, glimmer: 1_000_000)
-        XCTAssertTrue(game.build("bakery", at: Tile(c: 13, r: 13)))
-        let id = game.state.buildings.last!.id
-        XCTAssertTrue(game.upgrade(id))
-        XCTAssertTrue(game.upgrade(id))
-        XCTAssertFalse(game.upgrade(id), "maxLevel is 3")
-        XCTAssertNil(game.upgradeCost(game.building(id: id)!))
     }
 
     func testBuildingCostRisesWithEachCopy() {

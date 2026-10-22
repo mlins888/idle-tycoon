@@ -9,6 +9,7 @@ struct HUDView: View {
 
     @State private var showBuildMenu = false
     @State private var showResidents = false
+    @State private var showQuests = false
     @State private var showDebug = false
 
     var body: some View {
@@ -29,6 +30,11 @@ struct HUDView: View {
         }
         .sheet(isPresented: $showResidents) {
             ResidentsView(game: game)
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Theme.panel)
+        }
+        .sheet(isPresented: $showQuests) {
+            QuestLog(game: game)
                 .presentationDetents([.medium, .large])
                 .presentationBackground(Theme.panel)
         }
@@ -58,6 +64,7 @@ struct HUDView: View {
                 MainBar(game: game,
                         onBuild: { showBuildMenu = true },
                         onResidents: { showResidents = true },
+                        onQuests: { showQuests = true },
                         onCollectAll: onCollectAll)
             }
         }
@@ -116,6 +123,7 @@ private struct MainBar: View {
     let game: Game
     var onBuild: () -> Void
     var onResidents: () -> Void
+    var onQuests: () -> Void
     var onCollectAll: (Double) -> Void
 
     var body: some View {
@@ -138,6 +146,17 @@ private struct MainBar: View {
                 }
                 .buttonStyle(FenButtonStyle(prominent: true))
                 .disabled(waiting < 1)
+
+                Button(action: onQuests) {
+                    Image(systemName: "scroll.fill")
+                        .overlay(alignment: .topTrailing) {
+                            if game.readyQuestCount > 0 {
+                                Circle().fill(Theme.ember).frame(width: 10, height: 10).offset(x: 6, y: -6)
+                            }
+                        }
+                }
+                .buttonStyle(FenButtonStyle())
+                .accessibilityLabel(game.readyQuestCount > 0 ? "Quests, reward ready" : "Quests")
 
                 Button(action: onResidents) {
                     Image(systemName: "person.3.fill")

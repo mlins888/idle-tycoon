@@ -22,6 +22,10 @@ one at a time.
 Asset name: `building.<id>`, where `<id>` is the building's `id` in `Fenlight/Content/buildings.json`
 (for example `building.mossbread`, `building.reed_cottage`, `building.wisp_shrine`).
 
+**Stages:** stage 1 uses `building.<id>`. Later stages add the stage number: `building.mossbread.2`
+(Mossbread Bakery), `building.mossbread.3` (Bogberry Patisserie). Same canvas width as stage 1; later
+stages can be taller. Stage names are in `buildings.json`.
+
 - Footprints are square: 1×1, 2×2 or 3×3 tiles (`size` in buildings.json).
 - **Canvas width** = 256 × size (@2x). So a 2×2 building is 512 px wide.
 - **Canvas height** is up to you (taller buildings are fine).

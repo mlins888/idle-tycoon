@@ -1,10 +1,29 @@
 import UserNotifications
 
-/// The "your shop is full" local notification. Scheduled when the app goes to the background,
-/// cancelled when it comes back. No server involved.
+/// Local notifications: "your shop is full" and "renovation finished". Scheduled when the app goes
+/// to the background, cancelled when it comes back. No server involved.
 @MainActor
 enum Reminders {
     private static let id = "shop-full"
+    private static let renovationId = "renovation-done"
+
+    static func schedule(_ game: Game) {
+        scheduleShopFull(game)
+        scheduleRenovationDone(game)
+    }
+
+    static func scheduleRenovationDone(_ game: Game) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [renovationId])
+        guard let next = game.nextRenovationDone() else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "The \(next.name) is open"
+        content.body = "The scaffolding's down. Come and see what's new."
+        content.sound = .default
+        let delay = max(1, next.date.timeIntervalSince(game.now))
+        center.add(UNNotificationRequest(identifier: renovationId, content: content,
+                                         trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)))
+    }
 
     /// Asks once. iOS remembers the answer, so calling again does nothing.
     static func requestPermission() {
@@ -25,6 +44,6 @@ enum Reminders {
     }
 
     static func cancel() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id, renovationId])
     }
 }

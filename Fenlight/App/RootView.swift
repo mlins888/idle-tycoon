@@ -26,8 +26,8 @@ struct RootView: View {
             cards
         }
         .animation(.spring(duration: 0.35), value: summonResult)
-        .animation(.spring(duration: 0.35), value: game.arrivalQueue.first)
-        .sensoryFeedback(.success, trigger: game.arrivalQueue.first) { _, new in new != nil }
+        .animation(.spring(duration: 0.35), value: game.announcements.first)
+        .sensoryFeedback(.success, trigger: game.announcements.first) { _, new in new != nil }
         .sheet(item: $game.awaySummary) { summary in
             WelcomeBackView(summary: summary) {
                 scene.celebrateCollectAll(amount: game.collectAll())
@@ -45,7 +45,7 @@ struct RootView: View {
                 game.checkAway()
             case .background:
                 game.save()
-                Reminders.scheduleShopFull(game)
+                Reminders.schedule(game)
             case .inactive:
                 game.save()
             @unknown default:
@@ -74,10 +74,31 @@ struct RootView: View {
                     }
                 }
             }
-        } else if game.awaySummary == nil, let next = game.arrivalQueue.first {
+        } else if game.awaySummary == nil, let next = game.announcements.first {
             dimmed {
-                ArrivalCard(def: next) { game.arrivalQueue.removeFirst() }
+                announcementCard(next) { game.announcements.removeFirst() }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func announcementCard(_ a: Announcement, dismiss: @escaping () -> Void) -> some View {
+        switch a {
+        case .arrival(let def):
+            ArrivalCard(def: def, onDismiss: dismiss)
+        case .transformed(let def, let from, let to):
+            let stage = def.stage(to)
+            NoticeCard(eyebrow: "Renovation finished",
+                       title: "The \(def.stage(from).name) is now the \(stage.name)!",
+                       message: stage.blurb,
+                       detail: stage.sells.isEmpty ? nil : "Now selling " + stage.sells.joined(separator: ", ").lowercased(),
+                       button: "Wonderful", onDismiss: dismiss)
+        case .questReady(let q):
+            NoticeCard(eyebrow: "Quest complete",
+                       title: q.title,
+                       message: q.doneText,
+                       detail: "Claim your reward in the quest log.",
+                       button: "Got it", onDismiss: dismiss)
         }
     }
 

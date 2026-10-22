@@ -132,12 +132,14 @@ final class TownScene: SKScene {
         }
         for b in game.state.buildings {
             guard let def = game.def(for: b) else { continue }
+            let texture = ArtCatalog.shared.building(def, stage: b.stage)
             let node = buildingNodes[b.id] ?? {
-                let n = BuildingNode(buildingId: b.id, texture: ArtCatalog.shared.building(def))
+                let n = BuildingNode(buildingId: b.id, texture: texture)
                 buildingLayer.addChild(n)
                 buildingNodes[b.id] = n
                 return n
             }()
+            node.setTexture(texture)
             node.position = IsoMath.anchor(origin: b.origin, size: def.size)
             node.zPosition = IsoMath.zPosition(origin: b.origin, size: def.size)
             node.showWorkers(colors: game.workers(at: b.id).map(\.color), keeper: game.isAuto(b))
@@ -162,6 +164,7 @@ final class TownScene: SKScene {
         for b in game.state.buildings {
             guard let node = buildingNodes[b.id] else { continue }
             node.showPending(game.pending(b), capacity: game.capacity(b), full: game.isFull(b))
+            node.showRenovation(remaining: game.renovationRemaining(b))
         }
     }
 

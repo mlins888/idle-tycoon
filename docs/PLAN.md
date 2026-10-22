@@ -113,4 +113,6 @@ docs/ART_SPEC.md
   - Houses (Reed Cottage, Stilt House, Willow Lodge) provide beds.
   - Workers give +25% to a shop, +60% at their favourite. Collecting stays by hand until the Lamplighters' Guild (level 7) unlocks Keeper's Charters, which let a shop's worker collect automatically (up to 8 hours while away).
   - Shop levels 5 and 10 double that shop's speed. One "shop is full" reminder is scheduled when the app goes to the background. Haptics on collect, build and arrivals.
+- **Stages and quests: done.** Endless levels 1–10 were replaced by 2–3 **stages** per building (e.g. Mossbread Oven → Mossbread Bakery → Bogberry Patisserie), each selling more goods and earning about 3× more. Reaching a stage needs requirements (town level, other buildings, residents, quests, % restored) and a timed **renovation** behind scaffolding (finish early with wisps). 12 shops, 3 houses with stages. A simple **quest** system (15 quests, chapter 1) where residents ask for things; several stages require quests.
+- **Future direction:** a larger overarching storyline (chasing the Lantern Thief) built on the quest chapters, possibly with puzzle or combat gameplay as new quest objective types.
 - **Next: Phase 3** (residents walking around the map, a fuller collection screen, more folk).

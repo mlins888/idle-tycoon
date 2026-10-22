@@ -74,6 +74,22 @@ bar updates on its own after a collect.
 The SpriteKit map doesn't work that way, so `Game` keeps a `layoutRevision` counter that goes up
 whenever buildings or land change. The map checks it every frame and redraws when it changes.
 
+### Stages instead of levels
+
+Buildings don't level up forever. Each has a few **stages** that change what it *is*: the Mossbread Oven
+(sells mossbread) becomes the Mossbread Bakery (mossbread and honey cakes), then the Bogberry Patisserie.
+Each stage has its own name, goods, earnings and art, and is reached by **renovating**: pay the cost
+once its **requirements** are met (town level, another building at a stage, a resident living in town,
+a finished quest, or how much of the fen is restored), then the building closes for a while and reopens
+transformed. Growth comes from more kinds of buildings and more stages, defined in `buildings.json`.
+
+### Quests
+
+Residents ask for things: collect glimmer from a shop, build something, reach a stage, cleanse murk,
+grow the town. Quests live in `quests.json`. Several stages require a quest, which is how the story
+gates progress. Up to three are active at once; finishing one can unlock the next. Each quest has a
+`chapter`, so a longer storyline (and later, other kinds of objectives) can grow out of this.
+
 ### Isometric grid
 
 The map is a 24 × 24 grid of square tiles, drawn as 2:1 diamonds. A `Tile` has `c` (column, runs
@@ -103,19 +119,22 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `World.swift` | Fixed facts about the map: `Tile`, `Chunk`, the map size, the starting land, footprint and neighbour helpers. |
-| `Content.swift` | `BuildingDef` (one *kind* of building: shop, house, shrine or guild) and `ResidentDef` (one resident), loaded from `buildings.json` and `residents.json`. |
-| `GameState.swift` | Everything that gets saved: glimmer, wisps, XP, placed buildings (`PlacedBuilding`), cleansed chunks, residents (`Resident`), when the next wanderer arrives, and the random generator's state. `newGame()` sets up a fresh town. Decodes older saves by filling in defaults for newer fields. |
+| `Content.swift` | The shapes of the content files: `BuildingDef` (one *kind* of building) with its `StageDef`s, `Requirement`, `ResidentDef`, and `QuestDef` with its `Objective` and `Reward`. Loaded from `buildings.json`, `residents.json` and `quests.json`. |
+| `GameState.swift` | Everything that gets saved: glimmer, wisps, XP, placed buildings (`PlacedBuilding`, with their stage and any renovation in progress), cleansed chunks, residents (`Resident`), when the next wanderer arrives, the random generator's state, lifetime counters for quests (`Stats`), active and finished quests. `newGame()` sets up a fresh town. Decodes older saves by filling in defaults for newer fields. |
 | `Residents.swift` | Rules about residents as plain functions: beds, who's waiting for a bed, who can wander in next, summon odds and the summon roll. |
 | `SeededRandom.swift` | A small repeatable random generator. Its state is saved, so summons can't be re-rolled by restarting the app. |
-| `Economy.swift` | All balance formulas: earning rates, milestone speed-ups, worker bonuses, capacity, build/upgrade/cleanse/charter costs, wisps, summon cost, wanderer timing, the offline cap, XP per level. Tune the game here. |
+| `Economy.swift` | Game-wide balance formulas: worker bonuses, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
+| `Requirements.swift` | Checks a requirement (town level, a building at a stage, a resident, a finished quest, % restored) and describes it in plain words. Used by building stages and quests. |
+| `Quests.swift` | Quest rules as plain functions: which quests can start, the counter value to remember when one starts, and how far along an objective is. |
 | `GameClock.swift` | The one source of "now". |
-| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `upgrade`, `cleanse`, `assignWorker`, `summon`, `buyCharter`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: keepers collect, residents arrive, level-ups pay wisps. Also builds the "Welcome back" summary and has the debug helpers. |
+| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
 
 ### `Fenlight/Content`
 
 | File | What it does |
 |------|--------------|
-| `buildings.json` | Every building: shops (earning rate, how long they take to fill, max level), houses (beds), the Wisp Shrine and the Lamplighters' Guild. Fields that don't apply to a kind can be left out. |
+| `buildings.json` | Every building and its **stages**. Each stage has a name, description, what it sells, earning rate and how long it holds (shops) or beds (houses), plus the renovation cost, time and requirements to reach it. Fields that don't apply can be left out. |
+| `quests.json` | Every quest: chapter, who gives it, title, text, the objective, the reward, and prerequisites. |
 | `residents.json` | Every resident: name, folk, description, rarity, how they arrive (`wanderer`, `story` or `summon`), unlock level, favourite shop, placeholder colour. |
 
 ### `Fenlight/Map`: the town you see
@@ -134,7 +153,8 @@ decides draw order so buildings lower on the screen draw in front.
 |------|--------------|
 | `Theme.swift` | UI colours (including rarity colours), fonts, the panel style (`fenPanel()`), button style, coin and wisp icons. Uses `ui.panel` / `ui.button` art when it exists. |
 | `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
-| `Panels.swift` | `BuildingPanel` (with worker slots and the Keeper's Charter), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `Panels.swift` | `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
 | `ResidentsView.swift` | The Townsfolk screen (everyone in town, where they work, who's on the way), resident `Portrait`s, and the `ArrivalCard`. |
 | `Haptics.swift` | Small vibrations on collect, build and arrivals. |
 | `Format.swift` | Short number and time text: 12,345 → "12.3K", 8,100 s → "2h 15m". |
@@ -149,7 +169,8 @@ decides draw order so buildings lower on the screen draw in front.
 
 | File | What it does |
 |------|--------------|
-| `FenlightTests.swift` | Automated checks for earnings, collecting, upgrades, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `StageQuestTests.swift` | Checks for stages and renovation (requirements, paying out, closing and reopening, finishing while away, finish-now, house beds), quests (starting, progress, claiming, follow-ups, the three-quest limit), and that every id referenced in the shipped JSON exists. |
 | `ResidentTests.swift` | Checks for arrivals (story, wanderers, while away), summoning (odds, repeatability, duplicates), worker bonuses, auto-collect and the offline cap, wisps, and loading version 1 saves. |
 
 ## Walkthroughs
@@ -195,6 +216,19 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 2. Before any change to a shop's rate (assigning, removing, upgrading), `settle` pays out what the shop earned so far, so a new rate never applies to time that already passed.
 3. Once the Lamplighters' Guild is built (level 7), a shop with a worker can get a **Keeper's Charter** (`game.buyCharter`). From then on `isAuto` is true: the shop shows a lantern instead of a bubble, and `tick()` pays its earnings straight into your glimmer. While you're away it keeps earning past the normal shop limit, up to `Economy.offlineCap` (8 hours).
 
+### Renovating a building
+
+1. The building's panel shows a **Next stage** card: the new name, what it will sell, the earnings change, and a checklist of requirements (`game.unmetRequirements`).
+2. **Renovate** calls `game.startRenovation`, which pays out what the building had earned, takes the cost and sets `renovationEndsAt`.
+3. While closed it earns nothing; the map shows scaffolding with a countdown, and the panel offers **Finish now** for wisps.
+4. `tick()` finishes it when the time passes (even if the app was closed): the stage goes up, the art changes, and a "now the Bogberry Patisserie!" card is queued.
+
+### Quests
+
+1. `tick()` starts any quest whose giver lives in town and whose prerequisites are met, up to three at once. It remembers the relevant counter (for example glimmer collected from bakeries so far).
+2. Progress is the counter now minus the counter then (`Quests.progress`). Collecting, cleansing and building update the counters.
+3. When a quest is complete, a card announces it and the quest button shows a dot. **Claim reward** (`game.claimQuest`) pays the reward and lets follow-up quests start.
+
 ### Coming back after time away
 
 1. When the app returns to the foreground, `RootView` calls `game.checkAway()`.
@@ -206,7 +240,9 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 
 | I want to… | Where |
 |------------|-------|
-| Add or rebalance a building | `Fenlight/Content/buildings.json` |
+| Add or rebalance a building, or its stages | `Fenlight/Content/buildings.json` |
+| Add a quest | `Fenlight/Content/quests.json` |
+| Add a new kind of requirement or quest objective | `Requirement` / `Objective` in `Content.swift`, then `Requirements.swift` / `Quests.swift` |
 | Add a resident | `Fenlight/Content/residents.json` |
 | Change how fast things grow or cost | `Fenlight/Model/Economy.swift` |
 | Change the map size or starting land | `Fenlight/Model/World.swift` |

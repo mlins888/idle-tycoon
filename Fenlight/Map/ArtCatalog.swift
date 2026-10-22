@@ -17,8 +17,10 @@ final class ArtCatalog {
         return texture
     }
 
-    func building(_ def: BuildingDef) -> SKTexture {
-        texture("building.\(def.id)") { Placeholder.building(def) }
+    /// Stage 1 art is `building.<id>`; later stages are `building.<id>.2`, `building.<id>.3`.
+    func building(_ def: BuildingDef, stage: Int = 1) -> SKTexture {
+        let id = stage <= 1 ? "building.\(def.id)" : "building.\(def.id).\(stage)"
+        return texture(id) { Placeholder.building(def, stage: stage) }
     }
 
     /// A resident's portrait, for SwiftUI screens. Falls back to initials on their colour.
@@ -95,7 +97,9 @@ enum Placeholder {
 
     /// An isometric block with walls, a pyramid roof in the building's colour, a door and a lit window.
     /// Houses are lower, the shrine and guild have tall spires, so kinds are easy to tell apart.
-    static func building(_ def: BuildingDef) -> UIImage {
+    /// Later stages are taller, fly a pennant and have more lit windows.
+    static func building(_ def: BuildingDef, stage: Int = 1) -> UIImage {
+        let grow = 1 + 0.22 * CGFloat(max(0, stage - 1))
         let n = CGFloat(def.size)
         let w = IsoMath.tileWidth * n, footH = IsoMath.tileHeight * n
         let (wallScale, roofScale): (CGFloat, CGFloat) = switch def.kind {
@@ -104,9 +108,10 @@ enum Placeholder {
         case .shrine: (0.7, 2.2)
         case .guild: (1.3, 1.6)
         }
-        let wallH: CGFloat = (30 + 18 * n) * wallScale
-        let roofH: CGFloat = (26 + 16 * n) * roofScale
-        let canvas = CGSize(width: w, height: footH + wallH + roofH)
+        let wallH: CGFloat = (30 + 18 * n) * wallScale * grow
+        let roofH: CGFloat = (26 + 16 * n) * roofScale * grow
+        let flagH: CGFloat = stage >= 2 ? 30 : 0
+        let canvas = CGSize(width: w, height: footH + wallH + roofH + flagH)
         let roof = UIColor(hex: def.color)
 
         return UIGraphicsImageRenderer(size: canvas).image { ctx in
@@ -150,6 +155,26 @@ enum Placeholder {
             }
             fill([onRight(0.38, 0.35), onRight(0.62, 0.35), onRight(0.62, 0.7), onRight(0.38, 0.7)],
                  UIColor(hex: "#FFD978"))
+
+            if stage >= 3 {
+                // Extra windows.
+                fill([onRight(0.12, 0.35), onRight(0.28, 0.35), onRight(0.28, 0.7), onRight(0.12, 0.7)],
+                     UIColor(hex: "#FFD978"))
+                fill([onRight(0.72, 0.35), onRight(0.88, 0.35), onRight(0.88, 0.7), onRight(0.72, 0.7)],
+                     UIColor(hex: "#FFD978"))
+                fill([onLeft(0.15, 0.4), onLeft(0.3, 0.4), onLeft(0.3, 0.72), onLeft(0.15, 0.72)],
+                     UIColor(hex: "#FFD978"))
+            }
+            if stage >= 2 {
+                // A pennant on the roof.
+                g.setStrokeColor(UIColor(hex: "#1D1A24").cgColor)
+                g.setLineWidth(2.5)
+                g.move(to: apex)
+                g.addLine(to: CGPoint(x: apex.x, y: apex.y - flagH))
+                g.strokePath()
+                fill([CGPoint(x: apex.x, y: apex.y - flagH), CGPoint(x: apex.x + 22, y: apex.y - flagH + 7),
+                      CGPoint(x: apex.x, y: apex.y - flagH + 14)], stage >= 3 ? UIColor(hex: "#F2B544") : roof)
+            }
         }
     }
 }
