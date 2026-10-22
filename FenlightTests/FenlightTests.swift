@@ -14,7 +14,7 @@ private let testContent = GameContent(buildings: [
 /// A clock the test controls.
 private final class TestTime {
     var date = Date(timeIntervalSinceReferenceDate: 1_000_000)
-    lazy var clock = GameClock { [unowned self] in self.date }
+    lazy var clock = GameClock { self.date }
     func advance(_ s: TimeInterval) { date = date.addingTimeInterval(s) }
 }
 
@@ -90,7 +90,7 @@ final class EconomyTests: XCTestCase {
         let time = TestTime()
         let game = makeGame(time: time, glimmer: 1_000_000)
         XCTAssertTrue(game.build("bakery", at: Tile(c: 13, r: 13)))
-        let id = game.state.buildings[1].id
+        let id = game.state.buildings.last!.id
         XCTAssertTrue(game.upgrade(id))
         XCTAssertTrue(game.upgrade(id))
         XCTAssertFalse(game.upgrade(id), "maxLevel is 3")
@@ -138,7 +138,7 @@ final class GridTests: XCTestCase {
         let time = TestTime()
         let game = makeGame(time: time)
         XCTAssertTrue(game.build("bakery", at: Tile(c: 12, r: 12)))
-        let id = game.state.buildings[1].id
+        let id = game.state.buildings.last!.id
         XCTAssertTrue(game.move(id, to: Tile(c: 13, r: 12)), "overlaps only itself")
         XCTAssertEqual(game.building(id: id)?.origin, Tile(c: 13, r: 12))
     }

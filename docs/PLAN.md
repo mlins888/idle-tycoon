@@ -104,3 +104,13 @@ docs/ART_SPEC.md
 - Final names for the town, currency and app.
 - Starting shop list and balance numbers. I'll propose a first-pass table in Phase 1, and you can tune it.
 - Offline earning cap (proposed: 8 hours).
+
+## Status
+
+- **Phase 0–1: done.** Isometric map, cleansing, build anywhere, collect / Collect all, upgrades, levels, saving, offline summary.
+- **Phase 2: done.** As built:
+  - Arrivals are a mix: *story* residents join at set town levels, *wanderers* turn up every 20–40 minutes when there's a free bed, and rarer residents are *summoned* at the Wisp Shrine with wisps (earned from cleansing and levelling up; no real money).
+  - Houses (Reed Cottage, Stilt House, Willow Lodge) provide beds.
+  - Workers give +25% to a shop, +60% at their favourite. Collecting stays by hand until the Lamplighters' Guild (level 7) unlocks Keeper's Charters, which let a shop's worker collect automatically (up to 8 hours while away).
+  - Shop levels 5 and 10 double that shop's speed. One "shop is full" reminder is scheduled when the app goes to the background. Haptics on collect, build and arrivals.
+- **Next: Phase 3** (residents walking around the map, a fuller collection screen, more folk).

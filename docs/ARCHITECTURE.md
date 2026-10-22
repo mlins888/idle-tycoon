@@ -95,42 +95,48 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `FenlightApp.swift` | The app's entry point (`@main`). Opens one window showing `RootView`. |
-| `RootView.swift` | Creates the three main objects once (`Game`, `MapInteraction`, `TownScene`), puts the map behind the HUD, shows the "Welcome back" sheet, and saves when the app goes to the background. |
+| `RootView.swift` | Creates the three main objects once (`Game`, `MapInteraction`, `TownScene`), puts the map behind the HUD, shows the "Welcome back" sheet and the "moved in!" / summon cards, and saves when the app goes to the background. |
+| `Reminders.swift` | The "your shop is full" local notification: scheduled when the app goes to the background, cancelled when it comes back. |
 
 ### `Fenlight/Model`: the rules
 
 | File | What it does |
 |------|--------------|
 | `World.swift` | Fixed facts about the map: `Tile`, `Chunk`, the map size, the starting land, footprint and neighbour helpers. |
-| `Content.swift` | `BuildingDef`, the description of one *kind* of building, and loading them from `buildings.json`. |
-| `GameState.swift` | Everything that gets saved: glimmer, XP, placed buildings (`PlacedBuilding`), cleansed chunks. `newGame()` sets up a fresh town. |
-| `Economy.swift` | All balance formulas: earning rates, capacity, build/upgrade/cleanse costs, XP per level. Tune the game here. |
+| `Content.swift` | `BuildingDef` (one *kind* of building: shop, house, shrine or guild) and `ResidentDef` (one resident), loaded from `buildings.json` and `residents.json`. |
+| `GameState.swift` | Everything that gets saved: glimmer, wisps, XP, placed buildings (`PlacedBuilding`), cleansed chunks, residents (`Resident`), when the next wanderer arrives, and the random generator's state. `newGame()` sets up a fresh town. Decodes older saves by filling in defaults for newer fields. |
+| `Residents.swift` | Rules about residents as plain functions: beds, who's waiting for a bed, who can wander in next, summon odds and the summon roll. |
+| `SeededRandom.swift` | A small repeatable random generator. Its state is saved, so summons can't be re-rolled by restarting the app. |
+| `Economy.swift` | All balance formulas: earning rates, milestone speed-ups, worker bonuses, capacity, build/upgrade/cleanse/charter costs, wisps, summon cost, wanderer timing, the offline cap, XP per level. Tune the game here. |
 | `GameClock.swift` | The one source of "now". |
-| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `upgrade`, `cleanse`. Each checks the rules, changes the state and saves. Also builds the "Welcome back" summary and has the debug helpers. |
+| `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll`, `build`, `move`, `upgrade`, `cleanse`, `assignWorker`, `summon`, `buyCharter`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: keepers collect, residents arrive, level-ups pay wisps. Also builds the "Welcome back" summary and has the debug helpers. |
 
 ### `Fenlight/Content`
 
 | File | What it does |
 |------|--------------|
-| `buildings.json` | The shops: name, description, size, cost, unlock level, earning rate, how long they take to fill, XP, max level, placeholder colour. |
+| `buildings.json` | Every building: shops (earning rate, how long they take to fill, max level), houses (beds), the Wisp Shrine and the Lamplighters' Guild. Fields that don't apply to a kind can be left out. |
+| `residents.json` | Every resident: name, folk, description, rarity, how they arrive (`wanderer`, `story` or `summon`), unlock level, favourite shop, placeholder colour. |
 
 ### `Fenlight/Map`: the town you see
 
 | File | What it does |
 |------|--------------|
 | `IsoMath.swift` | Tile ↔ screen conversions, where a building's picture is anchored, draw order, and outline shapes for footprints and chunks. |
-| `TownScene.swift` | The SpriteKit scene. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, shows the placement preview, and handles pan, pinch and tap. |
-| `BuildingNode.swift` | One building on the map: its picture and the glimmer bubble above it (which bobs when full). |
+| `TownScene.swift` | The SpriteKit scene. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
+| `BuildingNode.swift` | One building on the map: its picture, the glimmer bubble above it (which bobs when full), coloured dots for its workers, and a glowing lantern when a keeper collects it. |
 | `MapInteraction.swift` | What the player is doing right now (browsing, placing, moving) and what's selected. Shared by the map and the HUD. |
-| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in houses and tiles. Also small colour helpers. |
+| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in buildings (shaped differently per kind), tiles and resident portraits. Also small colour helpers. |
 
 ### `Fenlight/UI`: buttons and panels
 
 | File | What it does |
 |------|--------------|
-| `Theme.swift` | UI colours, fonts, the panel style (`fenPanel()`), button style and coin icon. Uses `ui.panel` / `ui.button` art when it exists. |
-| `HUDView.swift` | The overlay. Top bar (glimmer, level, restoration %). The bottom area switches between Collect all + Build, the placement Cancel/Confirm bar, a building's panel, or the cleanse panel. |
-| `Panels.swift` | `BuildingPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `Theme.swift` | UI colours (including rarity colours), fonts, the panel style (`fenPanel()`), button style, coin and wisp icons. Uses `ui.panel` / `ui.button` art when it exists. |
+| `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
+| `Panels.swift` | `BuildingPanel` (with worker slots and the Keeper's Charter), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
+| `ResidentsView.swift` | The Townsfolk screen (everyone in town, where they work, who's on the way), resident `Portrait`s, and the `ArrivalCard`. |
+| `Haptics.swift` | Small vibrations on collect, build and arrivals. |
 | `Format.swift` | Short number and time text: 12,345 → "12.3K", 8,100 s → "2h 15m". |
 
 ### `Fenlight/Persistence`
@@ -144,6 +150,7 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, upgrades, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `ResidentTests.swift` | Checks for arrivals (story, wanderers, while away), summoning (odds, repeatability, duplicates), worker bonuses, auto-collect and the offline cap, wisps, and loading version 1 saves. |
 
 ## Walkthroughs
 
@@ -169,20 +176,38 @@ If the shop had nothing to collect, the tap selects it instead and `HUDView` sho
 
 1. Tapping a murk tile selects its chunk; the scene outlines it and `HUDView` shows `CleansePanel`.
 2. `game.canCleanse` only allows chunks next to land that's already clear.
-3. `game.cleanse` deducts the cost, adds XP and marks the chunk cleansed.
+3. `game.cleanse` deducts the cost, adds XP and wisps, and marks the chunk cleansed.
 4. The scene redraws the ground, and `applyRestorationTint` makes the whole fen a little less grey.
+
+### Residents arriving
+
+Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
+
+1. **Story residents** whose unlock level you've reached move in straight away if there's a bed (Wren, the first one, takes the starting cottage).
+2. **Wanderers**: if there's a free bed and someone left to come, `nextWandererAt` is set 20–40 minutes ahead. When that time passes they move in, and the next one is scheduled. Because this compares timestamps, wanderers also arrive while the app is closed.
+3. Each arrival goes into `arrivalQueue`, and `RootView` shows a "moved in!" card for each. If you were away, the Welcome back screen lists them instead.
+
+**Summoning** is separate: at the Wisp Shrine, `game.summon()` spends wisps, rolls a rarity by weight and picks someone of that rarity. If they already live in town, some wisps come back.
+
+### Workers and auto-collect
+
+1. A shop's panel has a worker slot (big shops have two). `game.assignWorker` puts a resident there. Their bonus is +25%, or +60% at their favourite shop.
+2. Before any change to a shop's rate (assigning, removing, upgrading), `settle` pays out what the shop earned so far, so a new rate never applies to time that already passed.
+3. Once the Lamplighters' Guild is built (level 7), a shop with a worker can get a **Keeper's Charter** (`game.buyCharter`). From then on `isAuto` is true: the shop shows a lantern instead of a bubble, and `tick()` pays its earnings straight into your glimmer. While you're away it keeps earning past the normal shop limit, up to `Economy.offlineCap` (8 hours).
 
 ### Coming back after time away
 
 1. When the app returns to the foreground, `RootView` calls `game.checkAway()`.
-2. If you were gone at least a minute and shops have glimmer waiting, it creates an `AwaySummary`.
-3. `RootView` shows `WelcomeBackView`, whose Collect all calls `game.collectAll()`.
+2. That runs `tick()` first, so keepers collect and residents arrive for the time you were gone.
+3. If you were gone at least a minute and anything happened (glimmer waiting, keeper earnings or new residents), it creates an `AwaySummary`.
+4. `RootView` shows `WelcomeBackView`, whose Collect all calls `game.collectAll()`.
 
 ## Common changes
 
 | I want to… | Where |
 |------------|-------|
-| Add or rebalance a shop | `Fenlight/Content/buildings.json` |
+| Add or rebalance a building | `Fenlight/Content/buildings.json` |
+| Add a resident | `Fenlight/Content/residents.json` |
 | Change how fast things grow or cost | `Fenlight/Model/Economy.swift` |
 | Change the map size or starting land | `Fenlight/Model/World.swift` |
 | Change what a new game starts with | `GameState.newGame` in `Fenlight/Model/GameState.swift` |

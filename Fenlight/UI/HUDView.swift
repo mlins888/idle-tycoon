@@ -5,8 +5,10 @@ struct HUDView: View {
     let game: Game
     let ui: MapInteraction
     var onCollectAll: (Double) -> Void
+    var onSummon: (SummonResult) -> Void
 
     @State private var showBuildMenu = false
+    @State private var showResidents = false
     @State private var showDebug = false
 
     var body: some View {
@@ -25,6 +27,11 @@ struct HUDView: View {
             .presentationDetents([.medium, .large])
             .presentationBackground(Theme.panel)
         }
+        .sheet(isPresented: $showResidents) {
+            ResidentsView(game: game)
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Theme.panel)
+        }
         .sheet(isPresented: $showDebug) {
             DebugMenu(game: game)
                 .presentationDetents([.medium])
@@ -38,12 +45,20 @@ struct HUDView: View {
         case .placing, .moving:
             PlacementBar(game: game, ui: ui)
         case .browse:
-            if let id = ui.selectedBuildingId, let b = game.building(id: id) {
-                BuildingPanel(game: game, ui: ui, building: b)
+            if let id = ui.selectedBuildingId, let b = game.building(id: id), let def = game.def(for: b) {
+                switch def.kind {
+                case .shop: BuildingPanel(game: game, ui: ui, building: b)
+                case .house: HousePanel(game: game, ui: ui, building: b)
+                case .shrine: ShrinePanel(game: game, ui: ui, building: b, onSummon: onSummon)
+                case .guild: GuildPanel(game: game, ui: ui, building: b)
+                }
             } else if let chunk = ui.selectedChunk {
                 CleansePanel(game: game, ui: ui, chunk: chunk)
             } else {
-                MainBar(game: game, onBuild: { showBuildMenu = true }, onCollectAll: onCollectAll)
+                MainBar(game: game,
+                        onBuild: { showBuildMenu = true },
+                        onResidents: { showResidents = true },
+                        onCollectAll: onCollectAll)
             }
         }
     }
@@ -55,13 +70,22 @@ private struct TopBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            HStack(spacing: 8) {
-                GlimmerIcon(size: 22)
-                Text(Format.compact(game.state.glimmer))
-                    .font(Theme.title(24))
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: game.state.glimmer)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    GlimmerIcon(size: 22)
+                    Text(Format.compact(game.state.glimmer))
+                        .font(Theme.title(24))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: game.state.glimmer)
+                }
+                HStack(spacing: 6) {
+                    WispIcon(size: 16)
+                    Text("\(Int(game.state.wisps)) wisps")
+                        .font(Theme.body(13, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.wisp)
+                }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
@@ -91,6 +115,7 @@ private struct TopBar: View {
 private struct MainBar: View {
     let game: Game
     var onBuild: () -> Void
+    var onResidents: () -> Void
     var onCollectAll: (Double) -> Void
 
     var body: some View {
@@ -98,22 +123,33 @@ private struct MainBar: View {
             let waiting = game.totalPending()
             HStack(spacing: 10) {
                 Button {
-                    onCollectAll(game.collectAll())
+                    let amount = game.collectAll()
+                    if amount >= 1 { Haptics.collect() }
+                    onCollectAll(amount)
                 } label: {
                     HStack(spacing: 8) {
                         GlimmerIcon(size: 18)
                         Text(waiting >= 1 ? "Collect all · \(Format.compact(waiting))" : "Nothing to collect")
                             .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(FenButtonStyle(prominent: true))
                 .disabled(waiting < 1)
 
-                Button(action: onBuild) {
-                    Label("Build", systemImage: "hammer.fill")
+                Button(action: onResidents) {
+                    Image(systemName: "person.3.fill")
                 }
                 .buttonStyle(FenButtonStyle())
+                .accessibilityLabel("Townsfolk")
+
+                Button(action: onBuild) {
+                    Image(systemName: "hammer.fill")
+                }
+                .buttonStyle(FenButtonStyle())
+                .accessibilityLabel("Build")
             }
             .fenPanel()
         }
@@ -142,7 +178,10 @@ private struct PlacementBar: View {
                 Button {
                     guard let origin = ui.ghostOrigin, let defId else { return }
                     let done = movingId.map { game.move($0, to: origin) } ?? game.build(defId, at: origin)
-                    if done { ui.finishPlacement() }
+                    if done {
+                        Haptics.build()
+                        ui.finishPlacement()
+                    }
                 } label: {
                     if let def, movingId == nil {
                         HStack(spacing: 6) {

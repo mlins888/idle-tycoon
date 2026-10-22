@@ -10,6 +10,8 @@ final class BuildingNode: SKNode {
     private let bubbleLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
     private var shownText = ""
     private var shownFull = false
+    private let badges = SKNode()
+    private let keeperLantern = SKShapeNode(circleOfRadius: 8)
 
     init(buildingId: Int, texture: SKTexture) {
         self.buildingId = buildingId
@@ -39,6 +41,34 @@ final class BuildingNode: SKNode {
         bubbleLabel.verticalAlignmentMode = .center
         bubbleLabel.horizontalAlignmentMode = .left
         bubble.addChild(bubbleLabel)
+
+        badges.position = CGPoint(x: -sprite.size.width * 0.3, y: sprite.size.height * 0.55)
+        badges.zPosition = 1
+        addChild(badges)
+
+        keeperLantern.fillColor = UIColor(hex: "#FFD978")
+        keeperLantern.strokeColor = UIColor(hex: "#8A5B00")
+        keeperLantern.glowWidth = 6
+        keeperLantern.position = CGPoint(x: 0, y: sprite.size.height + 12)
+        keeperLantern.zPosition = 1
+        keeperLantern.isHidden = true
+        let flicker = SKAction.sequence([.fadeAlpha(to: 0.7, duration: 0.8), .fadeAlpha(to: 1, duration: 0.8)])
+        keeperLantern.run(.repeatForever(flicker))
+        addChild(keeperLantern)
+    }
+
+    /// A small coloured dot per worker, plus a glowing lantern when a keeper collects automatically.
+    func showWorkers(colors: [String], keeper: Bool) {
+        badges.removeAllChildren()
+        for (i, hex) in colors.enumerated() {
+            let dot = SKShapeNode(circleOfRadius: 9)
+            dot.fillColor = UIColor(hex: hex)
+            dot.strokeColor = UIColor(hex: "#FFF8E6")
+            dot.lineWidth = 2.5
+            dot.position = CGPoint(x: CGFloat(i) * 14, y: 0)
+            badges.addChild(dot)
+        }
+        keeperLantern.isHidden = !keeper
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }

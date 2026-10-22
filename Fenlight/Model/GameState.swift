@@ -8,11 +8,24 @@ struct PlacedBuilding: Codable, Identifiable, Hashable {
     var level: Int
     /// Earnings are worked out from this timestamp, which is what makes offline earnings work.
     var lastCollectedAt: Date
+    /// Has a Keeper's Charter: its worker collects it automatically.
+    var autoCollect: Bool = false
+}
+
+/// Someone who lives in town.
+struct Resident: Codable, Hashable, Identifiable {
+    var id: String { defId }
+    let defId: String
+    /// The house they sleep in.
+    var homeId: Int
+    /// The shop they work at, if any.
+    var workId: Int?
+    let arrivedAt: Date
 }
 
 /// Everything that gets saved. Kept as plain data so it can be encoded and tested easily.
 struct GameState: Codable, Equatable {
-    static let currentVersion = 1
+    static let currentVersion = 2
 
     var version: Int = GameState.currentVersion
     var glimmer: Double
@@ -22,6 +35,16 @@ struct GameState: Codable, Equatable {
     var nextBuildingId: Int
     var savedAt: Date
 
+    // Added in version 2.
+    var residents: [Resident] = []
+    var wisps: Double = 0
+    /// When the next wanderer reaches town. Nil while there's no free bed.
+    var nextWandererAt: Date?
+    /// State of the seeded random generator, so summons and arrivals are fair and repeatable.
+    var rngState: UInt64 = 0x9E37_79B9_7F4A_7C15
+    /// The highest level that has already paid out its wisps.
+    var rewardedLevel: Int = 1
+
     static func newGame(now: Date) -> GameState {
         GameState(
             glimmer: 60,
@@ -29,10 +52,47 @@ struct GameState: Codable, Equatable {
             buildings: [
                 PlacedBuilding(id: 1, defId: "reed_candles", origin: Tile(c: 11, r: 11),
                                level: 1, lastCollectedAt: now),
+                PlacedBuilding(id: 2, defId: "reed_cottage", origin: Tile(c: 9, r: 12),
+                               level: 1, lastCollectedAt: now),
             ],
             cleansedChunks: World.startingChunks,
-            nextBuildingId: 2,
-            savedAt: now
+            nextBuildingId: 3,
+            savedAt: now,
+            rngState: UInt64(now.timeIntervalSinceReferenceDate * 1000) | 1
         )
+    }
+}
+
+// Decoding by hand so saves from older versions (missing the newer fields) still load.
+
+extension PlacedBuilding {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        defId = try c.decode(String.self, forKey: .defId)
+        origin = try c.decode(Tile.self, forKey: .origin)
+        level = try c.decode(Int.self, forKey: .level)
+        lastCollectedAt = try c.decode(Date.self, forKey: .lastCollectedAt)
+        autoCollect = try c.decodeIfPresent(Bool.self, forKey: .autoCollect) ?? false
+    }
+}
+
+extension GameState {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        glimmer = try c.decode(Double.self, forKey: .glimmer)
+        xp = try c.decode(Double.self, forKey: .xp)
+        buildings = try c.decode([PlacedBuilding].self, forKey: .buildings)
+        cleansedChunks = try c.decode(Set<Chunk>.self, forKey: .cleansedChunks)
+        nextBuildingId = try c.decode(Int.self, forKey: .nextBuildingId)
+        savedAt = try c.decode(Date.self, forKey: .savedAt)
+        residents = try c.decodeIfPresent([Resident].self, forKey: .residents) ?? []
+        wisps = try c.decodeIfPresent(Double.self, forKey: .wisps) ?? 0
+        nextWandererAt = try c.decodeIfPresent(Date.self, forKey: .nextWandererAt)
+        rngState = try c.decodeIfPresent(UInt64.self, forKey: .rngState)
+            ?? (UInt64(savedAt.timeIntervalSinceReferenceDate * 1000) | 1)
+        rewardedLevel = try c.decodeIfPresent(Int.self, forKey: .rewardedLevel)
+            ?? Economy.level(forXP: xp)
     }
 }

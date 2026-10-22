@@ -110,5 +110,65 @@
     "xp": 700,
     "maxLevel": 10,
     "color": "#5C7FB0"
+  },
+  {
+    "id": "reed_cottage",
+    "name": "Reed Cottage",
+    "blurb": "A one-room hut on stilts. Snug, if a little damp.",
+    "kind": "house",
+    "size": 1,
+    "cost": 40,
+    "unlockLevel": 1,
+    "xp": 5,
+    "beds": 1,
+    "color": "#A7744A"
+  },
+  {
+    "id": "stilt_house",
+    "name": "Stilt House",
+    "blurb": "Three bunks above the waterline and a porch for frog-watching.",
+    "kind": "house",
+    "size": 2,
+    "cost": 400,
+    "unlockLevel": 2,
+    "xp": 20,
+    "beds": 3,
+    "color": "#6E8B6A"
+  },
+  {
+    "id": "willow_lodge",
+    "name": "Willow Lodge",
+    "blurb": "A rambling lodge woven into a living willow.",
+    "kind": "house",
+    "size": 2,
+    "cost": 5000,
+    "unlockLevel": 5,
+    "xp": 80,
+    "beds": 5,
+    "color": "#8A9A5B"
+  },
+  {
+    "id": "wisp_shrine",
+    "name": "Wisp Shrine",
+    "blurb": "Offer wisps here to call rare folk out of the deep fen.",
+    "kind": "shrine",
+    "size": 2,
+    "cost": 300,
+    "unlockLevel": 2,
+    "xp": 25,
+    "unique": true,
+    "color": "#6FD6C8"
+  },
+  {
+    "id": "lamplighters_guild",
+    "name": "Lamplighters' Guild",
+    "blurb": "Grants Keeper's Charters, so your workers can collect for you.",
+    "kind": "guild",
+    "size": 2,
+    "cost": 50000,
+    "unlockLevel": 7,
+    "xp": 300,
+    "unique": true,
+    "color": "#D9A441"
   }
 ]

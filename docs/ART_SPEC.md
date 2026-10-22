@@ -20,7 +20,7 @@ one at a time.
 ## Buildings
 
 Asset name: `building.<id>`, where `<id>` is the building's `id` in `Fenlight/Content/buildings.json`
-(for example `building.mossbread`).
+(for example `building.mossbread`, `building.reed_cottage`, `building.wisp_shrine`).
 
 - Footprints are square: 1×1, 2×2 or 3×3 tiles (`size` in buildings.json).
 - **Canvas width** = 256 × size (@2x). So a 2×2 building is 512 px wide.
@@ -35,6 +35,14 @@ Asset name: `building.<id>`, where `<id>` is the building's `id` in `Fenlight/Co
 | 1×1  | 256                | 256 × 128               |
 | 2×2  | 512                | 512 × 256               |
 | 3×3  | 768                | 768 × 384               |
+
+## Resident portraits
+
+Asset name: `resident.<id>`, where `<id>` is the resident's `id` in `Fenlight/Content/residents.json`
+(for example `resident.wren`).
+
+- Square, 256 × 256 (@2x). Shown cropped to a circle, so keep the face in the middle.
+- Until a portrait exists, the game shows the resident's initials on their `color`.
 
 ## UI
 

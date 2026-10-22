@@ -1,0 +1,211 @@
+[
+  {
+    "id": "wren",
+    "name": "Wren Alder",
+    "folk": "Human hedge-witch",
+    "blurb": "The first to stay when the lights went out. She kept one rushlight burning the whole time.",
+    "rarity": "common",
+    "arrival": "story",
+    "unlockLevel": 1,
+    "favoriteShop": "reed_candles",
+    "color": "#C98B5A"
+  },
+  {
+    "id": "old_bramble",
+    "name": "Old Bramble",
+    "folk": "Frog-folk ferryman",
+    "blurb": "Knows every channel in the fen, including the ones that weren't there yesterday.",
+    "rarity": "uncommon",
+    "arrival": "story",
+    "unlockLevel": 3,
+    "favoriteShop": "ferry_dock",
+    "color": "#5F8F4E"
+  },
+  {
+    "id": "sorrel",
+    "name": "Sorrel",
+    "folk": "Moth-winged fae",
+    "blurb": "Drawn back by the first lit window in years. Embroiders by lamplight and nothing else.",
+    "rarity": "uncommon",
+    "arrival": "story",
+    "unlockLevel": 6,
+    "favoriteShop": "mothsilk",
+    "color": "#B9A4D8"
+  },
+  {
+    "id": "ilsabet",
+    "name": "Ilsabet Vane",
+    "folk": "Elf lamplighter",
+    "blurb": "Once tended every lantern in the fen. She has a score to settle with the Lantern Thief.",
+    "rarity": "rare",
+    "arrival": "story",
+    "unlockLevel": 5,
+    "favoriteShop": "lantern_works",
+    "color": "#E8C46A"
+  },
+  {
+    "id": "bodkin",
+    "name": "Bodkin Harrow",
+    "folk": "Badger-folk innkeeper",
+    "blurb": "Says an inn isn't an inn until someone's fallen asleep by the fire.",
+    "rarity": "rare",
+    "arrival": "story",
+    "unlockLevel": 8,
+    "favoriteShop": "bellwater_inn",
+    "color": "#7A6A5A"
+  },
+  {
+    "id": "pip",
+    "name": "Pip Reedwhistle",
+    "folk": "Fox-folk peddler",
+    "blurb": "Sells buttons, gossip and the occasional map of dubious accuracy.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 1,
+    "favoriteShop": "mossbread",
+    "color": "#D9773F"
+  },
+  {
+    "id": "marigold",
+    "name": "Marigold Fen",
+    "folk": "Human baker",
+    "blurb": "Can't stand an empty oven. Or an empty stomach.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 1,
+    "favoriteShop": "mossbread",
+    "color": "#E3B04B"
+  },
+  {
+    "id": "wick",
+    "name": "Wick",
+    "folk": "Candle sprite",
+    "blurb": "Small, bright and easily offended. Glows brighter when complimented.",
+    "rarity": "uncommon",
+    "arrival": "wanderer",
+    "unlockLevel": 1,
+    "favoriteShop": "reed_candles",
+    "color": "#F5D06B"
+  },
+  {
+    "id": "ottoline",
+    "name": "Ottoline Brook",
+    "folk": "Otter-folk fisher",
+    "blurb": "Laughs at everything, especially the weather.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 2,
+    "favoriteShop": "ferry_dock",
+    "color": "#8A6A4A"
+  },
+  {
+    "id": "hazel",
+    "name": "Hazel Underbough",
+    "folk": "Hare-folk herbalist",
+    "blurb": "Has a remedy for everything and a strong opinion about the rest.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 2,
+    "favoriteShop": "apothecary",
+    "color": "#B49A7A"
+  },
+  {
+    "id": "dunstan",
+    "name": "Dunstan Croak",
+    "folk": "Frog-folk tea brewer",
+    "blurb": "Steeps his tea for exactly as long as the rain lasts.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 2,
+    "favoriteShop": "toadstool_tea",
+    "color": "#6E9A5A"
+  },
+  {
+    "id": "bryony",
+    "name": "Bryony Thorn",
+    "folk": "Human apothecary's apprentice",
+    "blurb": "Labels everything. Twice.",
+    "rarity": "uncommon",
+    "arrival": "wanderer",
+    "unlockLevel": 4,
+    "favoriteShop": "apothecary",
+    "color": "#9B5A7A"
+  },
+  {
+    "id": "fennimore",
+    "name": "Fennimore Quill",
+    "folk": "Owl-folk scholar",
+    "blurb": "Writing a history of the fen. It's already eleven volumes and he's only reached last spring.",
+    "rarity": "uncommon",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "toadstool_tea",
+    "color": "#9A8A6A"
+  },
+  {
+    "id": "nettle_burr",
+    "name": "Nettle & Burr",
+    "folk": "Goblin tinker twins",
+    "blurb": "They fix lanterns. Mostly. The ones they don't fix are now much more interesting.",
+    "rarity": "uncommon",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "lantern_works",
+    "color": "#7F9A3A"
+  },
+  {
+    "id": "cindral",
+    "name": "Captain Cindral",
+    "folk": "Heron-folk ferry captain",
+    "blurb": "Stands on one leg for hours and has never once lost a passenger. Or so she claims.",
+    "rarity": "rare",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "ferry_dock",
+    "color": "#8FA8B8"
+  },
+  {
+    "id": "aurelio",
+    "name": "Aurelio Glasswing",
+    "folk": "Moth-fae weaver",
+    "blurb": "Weaves cloth from moonlight and gossip in roughly equal parts.",
+    "rarity": "rare",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "mothsilk",
+    "color": "#C7B8E8"
+  },
+  {
+    "id": "velvet",
+    "name": "Velvet",
+    "folk": "Cat-folk hostess",
+    "blurb": "Remembers every guest's name, drink and secret.",
+    "rarity": "rare",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "bellwater_inn",
+    "color": "#5A4A6A"
+  },
+  {
+    "id": "mother_sedge",
+    "name": "Mother Sedge",
+    "folk": "Ancient bog-witch",
+    "blurb": "Older than the fen itself. She remembers what the Lantern Thief looked like before the mask.",
+    "rarity": "legendary",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "apothecary",
+    "color": "#4E6A5A"
+  },
+  {
+    "id": "ashlock",
+    "name": "Sir Ember Ashlock",
+    "folk": "Lantern-bearer knight",
+    "blurb": "Carries a flame the Thief could never steal. Polite to a fault, even to frogs.",
+    "rarity": "legendary",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "lantern_works",
+    "color": "#E07A3A"
+  }
+]

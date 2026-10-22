@@ -21,6 +21,11 @@ final class ArtCatalog {
         texture("building.\(def.id)") { Placeholder.building(def) }
     }
 
+    /// A resident's portrait, for SwiftUI screens. Falls back to initials on their colour.
+    func portrait(_ def: ResidentDef) -> UIImage {
+        UIImage(named: "resident.\(def.id)") ?? Placeholder.portrait(def)
+    }
+
     func grassTile() -> SKTexture {
         texture("tile.grass") { Placeholder.tile(fill: UIColor(hex: "#8DBA6E"), speckle: UIColor(hex: "#A9CF84")) }
     }
@@ -32,6 +37,34 @@ final class ArtCatalog {
 
 /// Simple drawn stand-ins for real art, built at the same sizes the real art should use.
 enum Placeholder {
+    private static var portraits: [String: UIImage] = [:]
+
+    /// A coloured circle with the resident's initials.
+    static func portrait(_ def: ResidentDef) -> UIImage {
+        if let cached = portraits[def.id] { return cached }
+        let size = CGSize(width: 128, height: 128)
+        let initials = def.name.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined()
+        let image = UIGraphicsImageRenderer(size: size).image { _ in
+            let rect = CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2)
+            UIColor(hex: def.color).setFill()
+            UIBezierPath(ovalIn: rect).fill()
+            UIColor(hex: "#FFF8E6").setStroke()
+            let ring = UIBezierPath(ovalIn: rect.insetBy(dx: 3, dy: 3))
+            ring.lineWidth = 5
+            ring.stroke()
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 46, weight: .heavy),
+                .foregroundColor: UIColor(hex: "#FFF8E6"),
+            ]
+            let text = initials as NSString
+            let textSize = text.size(withAttributes: attrs)
+            text.draw(at: CGPoint(x: (size.width - textSize.width) / 2, y: (size.height - textSize.height) / 2),
+                      withAttributes: attrs)
+        }
+        portraits[def.id] = image
+        return image
+    }
+
     static func tile(fill: UIColor, speckle: UIColor) -> UIImage {
         let w = IsoMath.tileWidth, h = IsoMath.tileHeight
         return UIGraphicsImageRenderer(size: CGSize(width: w, height: h)).image { ctx in
@@ -61,11 +94,18 @@ enum Placeholder {
     }
 
     /// An isometric block with walls, a pyramid roof in the building's colour, a door and a lit window.
+    /// Houses are lower, the shrine and guild have tall spires, so kinds are easy to tell apart.
     static func building(_ def: BuildingDef) -> UIImage {
         let n = CGFloat(def.size)
         let w = IsoMath.tileWidth * n, footH = IsoMath.tileHeight * n
-        let wallH: CGFloat = 30 + 18 * n
-        let roofH: CGFloat = 26 + 16 * n
+        let (wallScale, roofScale): (CGFloat, CGFloat) = switch def.kind {
+        case .shop: (1, 1)
+        case .house: (0.75, 1.15)
+        case .shrine: (0.7, 2.2)
+        case .guild: (1.3, 1.6)
+        }
+        let wallH: CGFloat = (30 + 18 * n) * wallScale
+        let roofH: CGFloat = (26 + 16 * n) * roofScale
         let canvas = CGSize(width: w, height: footH + wallH + roofH)
         let roof = UIColor(hex: def.color)
 

@@ -18,6 +18,7 @@ final class TownScene: SKScene {
     private var lastRevision = -1
     private var lastRestoration = -1.0
     private var lastBubbleRefresh: TimeInterval = 0
+    private var lastTick: TimeInterval = 0
     private var didSetUp = false
 
     private let ghost = SKSpriteNode()
@@ -110,6 +111,10 @@ final class TownScene: SKScene {
             lastBubbleRefresh = currentTime
             refreshBubbles()
         }
+        if currentTime - lastTick > 1 {
+            lastTick = currentTime
+            game.tick()
+        }
         updatePlacementOverlay()
         updateChunkOutline()
     }
@@ -135,6 +140,7 @@ final class TownScene: SKScene {
             }()
             node.position = IsoMath.anchor(origin: b.origin, size: def.size)
             node.zPosition = IsoMath.zPosition(origin: b.origin, size: def.size)
+            node.showWorkers(colors: game.workers(at: b.id).map(\.color), keeper: game.isAuto(b))
         }
         applyRestorationTint()
     }
@@ -154,8 +160,8 @@ final class TownScene: SKScene {
 
     private func refreshBubbles() {
         for b in game.state.buildings {
-            guard let node = buildingNodes[b.id], let def = game.def(for: b) else { continue }
-            node.showPending(game.pending(b), capacity: Economy.capacity(def, level: b.level), full: game.isFull(b))
+            guard let node = buildingNodes[b.id] else { continue }
+            node.showPending(game.pending(b), capacity: game.capacity(b), full: game.isFull(b))
         }
     }
 
@@ -257,6 +263,7 @@ final class TownScene: SKScene {
                     ui.clearSelection()
                     floatText("+\(Format.compact(amount))", above: node)
                     refreshBubbles()
+                    Haptics.collect()
                 } else {
                     ui.selectedChunk = nil
                     ui.selectedBuildingId = id

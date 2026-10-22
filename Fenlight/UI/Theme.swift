@@ -13,6 +13,16 @@ enum Theme {
     static let moss = Color(hex: "#8CCB72")
     static let ember = Color(hex: "#E0654A")
     static let button = Color(hex: "#2C3833")
+    static let wisp = Color(hex: "#7FE3D6")
+
+    static func rarity(_ r: Rarity) -> Color {
+        switch r {
+        case .common: return Color(hex: "#C9CFC2")
+        case .uncommon: return Color(hex: "#8CCB72")
+        case .rare: return Color(hex: "#7FB8F0")
+        case .legendary: return Color(hex: "#F2B544")
+        }
+    }
 
     static func title(_ size: CGFloat) -> Font { .system(size: size, weight: .bold, design: .serif) }
     static func body(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
@@ -85,6 +95,17 @@ struct FenButtonStyle: ButtonStyle {
                 .scaleEffect(configuration.isPressed ? 0.96 : 1)
                 .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
         }
+    }
+}
+
+/// A small glowing wisp used next to wisp amounts.
+struct WispIcon: View {
+    var size: CGFloat = 16
+    var body: some View {
+        Circle()
+            .fill(RadialGradient(colors: [.white, Theme.wisp, Theme.wisp.opacity(0)], center: .center,
+                                 startRadius: 0, endRadius: size * 0.55))
+            .frame(width: size, height: size)
     }
 }
 
