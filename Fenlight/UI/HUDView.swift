@@ -1,0 +1,173 @@
+import SwiftUI
+
+/// Everything drawn over the map: the top bar, and a bottom area that changes with what you're doing.
+struct HUDView: View {
+    let game: Game
+    let ui: MapInteraction
+    var onCollectAll: (Double) -> Void
+
+    @State private var showBuildMenu = false
+    @State private var showDebug = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TopBar(game: game, onDebug: { showDebug = true })
+            Spacer(minLength: 0)
+            bottom
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+        .sheet(isPresented: $showBuildMenu) {
+            BuildMenu(game: game) { defId in
+                showBuildMenu = false
+                ui.startPlacing(defId)
+            }
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Theme.panel)
+        }
+        .sheet(isPresented: $showDebug) {
+            DebugMenu(game: game)
+                .presentationDetents([.medium])
+                .presentationBackground(Theme.panel)
+        }
+    }
+
+    @ViewBuilder
+    private var bottom: some View {
+        switch ui.mode {
+        case .placing, .moving:
+            PlacementBar(game: game, ui: ui)
+        case .browse:
+            if let id = ui.selectedBuildingId, let b = game.building(id: id) {
+                BuildingPanel(game: game, ui: ui, building: b)
+            } else if let chunk = ui.selectedChunk {
+                CleansePanel(game: game, ui: ui, chunk: chunk)
+            } else {
+                MainBar(game: game, onBuild: { showBuildMenu = true }, onCollectAll: onCollectAll)
+            }
+        }
+    }
+}
+
+private struct TopBar: View {
+    let game: Game
+    var onDebug: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 8) {
+                GlimmerIcon(size: 22)
+                Text(Format.compact(game.state.glimmer))
+                    .font(Theme.title(24))
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.snappy, value: game.state.glimmer)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Level \(game.level)")
+                    .font(Theme.body(13, weight: .bold))
+                ProgressView(value: game.levelProgress)
+                    .tint(Theme.lantern)
+                    .frame(width: 90)
+                Text("Fen restored \(Int((game.restoration * 100).rounded()))%")
+                    .font(Theme.body(11))
+                    .foregroundStyle(Theme.textDim)
+            }
+            #if DEBUG
+            Button(action: onDebug) {
+                Image(systemName: "wrench.and.screwdriver")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 32, height: 32)
+            }
+            .foregroundStyle(Theme.textDim)
+            .accessibilityLabel("Debug menu")
+            #endif
+        }
+        .fenPanel()
+    }
+}
+
+private struct MainBar: View {
+    let game: Game
+    var onBuild: () -> Void
+    var onCollectAll: (Double) -> Void
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+            let waiting = game.totalPending()
+            HStack(spacing: 10) {
+                Button {
+                    onCollectAll(game.collectAll())
+                } label: {
+                    HStack(spacing: 8) {
+                        GlimmerIcon(size: 18)
+                        Text(waiting >= 1 ? "Collect all · \(Format.compact(waiting))" : "Nothing to collect")
+                            .monospacedDigit()
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(FenButtonStyle(prominent: true))
+                .disabled(waiting < 1)
+
+                Button(action: onBuild) {
+                    Label("Build", systemImage: "hammer.fill")
+                }
+                .buttonStyle(FenButtonStyle())
+            }
+            .fenPanel()
+        }
+    }
+}
+
+private struct PlacementBar: View {
+    let game: Game
+    let ui: MapInteraction
+
+    var body: some View {
+        let (defId, movingId) = target
+        let def = defId.flatMap { game.content.building($0) }
+        let valid = ui.ghostOrigin.map { game.canPlace(defId ?? "", at: $0, ignoring: movingId) } ?? false
+
+        VStack(alignment: .leading, spacing: 10) {
+            Text(movingId == nil ? "Build \(def?.name ?? "")" : "Move \(def?.name ?? "")")
+                .font(Theme.title(18))
+            Text(valid ? "Tap the map to choose a spot, then confirm."
+                       : "That spot is blocked or still under murk. Tap somewhere else.")
+                .font(Theme.body(13))
+                .foregroundStyle(valid ? Theme.textDim : Theme.ember)
+            HStack(spacing: 10) {
+                Button("Cancel") { ui.finishPlacement() }
+                    .buttonStyle(FenButtonStyle())
+                Button {
+                    guard let origin = ui.ghostOrigin, let defId else { return }
+                    let done = movingId.map { game.move($0, to: origin) } ?? game.build(defId, at: origin)
+                    if done { ui.finishPlacement() }
+                } label: {
+                    if let def, movingId == nil {
+                        HStack(spacing: 6) {
+                            Text("Build for")
+                            GlimmerIcon(size: 14)
+                            Text(Format.compact(game.buildCost(def)))
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Place here").frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(FenButtonStyle(prominent: true))
+                .disabled(!valid)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fenPanel()
+    }
+
+    private var target: (String?, Int?) {
+        switch ui.mode {
+        case .placing(let defId): return (defId, nil)
+        case .moving(let id): return (game.building(id: id)?.defId, id)
+        case .browse: return (nil, nil)
+        }
+    }
+}

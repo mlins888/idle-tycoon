@@ -1,0 +1,66 @@
+import Foundation
+
+/// A square on the isometric grid. `c` runs down-right on screen, `r` runs down-left.
+struct Tile: Hashable, Codable {
+    var c: Int
+    var r: Int
+}
+
+/// A block of murk that is cleansed all at once (`World.chunkSize` tiles per side).
+struct Chunk: Hashable, Codable {
+    var cx: Int
+    var cy: Int
+}
+
+/// Fixed facts about the map: its size and how land is grouped into cleansable chunks.
+enum World {
+    static let size = 24
+    static let chunkSize = 4
+    static var chunksPerSide: Int { size / chunkSize }
+    static var chunkCount: Int { chunksPerSide * chunksPerSide }
+
+    /// The patch of fen that is already clear when a new game starts.
+    static let startingChunks: Set<Chunk> = [
+        Chunk(cx: 2, cy: 2), Chunk(cx: 3, cy: 2),
+        Chunk(cx: 2, cy: 3), Chunk(cx: 3, cy: 3),
+    ]
+
+    static func inBounds(_ t: Tile) -> Bool {
+        t.c >= 0 && t.r >= 0 && t.c < size && t.r < size
+    }
+
+    static func inBounds(_ ch: Chunk) -> Bool {
+        ch.cx >= 0 && ch.cy >= 0 && ch.cx < chunksPerSide && ch.cy < chunksPerSide
+    }
+
+    static func chunk(of t: Tile) -> Chunk {
+        Chunk(cx: t.c / chunkSize, cy: t.r / chunkSize)
+    }
+
+    static func origin(of ch: Chunk) -> Tile {
+        Tile(c: ch.cx * chunkSize, r: ch.cy * chunkSize)
+    }
+
+    /// Every tile covered by a square footprint whose top corner is `origin`.
+    static func footprint(origin: Tile, size: Int) -> [Tile] {
+        var tiles: [Tile] = []
+        for dc in 0..<size {
+            for dr in 0..<size {
+                tiles.append(Tile(c: origin.c + dc, r: origin.r + dr))
+            }
+        }
+        return tiles
+    }
+
+    /// The origin that centres a footprint of `size` on `tile` (used when the player taps a spot).
+    static func origin(centeredOn tile: Tile, size: Int) -> Tile {
+        let back = (size - 1) / 2
+        return Tile(c: tile.c - back, r: tile.r - back)
+    }
+
+    static func neighbors(of ch: Chunk) -> [Chunk] {
+        [Chunk(cx: ch.cx + 1, cy: ch.cy), Chunk(cx: ch.cx - 1, cy: ch.cy),
+         Chunk(cx: ch.cx, cy: ch.cy + 1), Chunk(cx: ch.cx, cy: ch.cy - 1)]
+            .filter(inBounds)
+    }
+}

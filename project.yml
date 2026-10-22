@@ -1,0 +1,51 @@
+name: Fenlight
+options:
+  bundleIdPrefix: com.mlins888
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Fenlight:
+    type: application
+    platform: iOS
+    sources:
+      - path: Fenlight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mlins888.fenlight
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Fenlight
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ENABLE_PREVIEWS: YES
+
+  FenlightTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FenlightTests
+    dependencies:
+      - target: Fenlight
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Fenlight:
+    build:
+      targets:
+        Fenlight: all
+        FenlightTests: [test]
+    test:
+      targets:
+        - FenlightTests
