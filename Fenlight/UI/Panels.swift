@@ -766,6 +766,7 @@ struct DebugMenu: View {
             HStack {
                 Button("+20 wisps") { game.debugAdd(wisps: 20) }
                 Button("Wanderer now") { game.debugWandererNow() }
+                Button("Wisp now") { game.debugWispNow() }
             }
             HStack {
                 Button("Next festival") { game.debugJumpToNextEvent() }

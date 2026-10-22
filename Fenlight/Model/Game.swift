@@ -846,6 +846,13 @@ final class Game {
         tick()
     }
 
+    /// Sends a lost wisp drifting over town right now.
+    func debugWispNow() {
+        state.wispVisibleUntil = nil
+        state.nextWispAt = now
+        tick()
+    }
+
     /// Makes the next wanderer arrive right now (if there's a bed and anyone left to come).
     func debugWandererNow() {
         state.nextWandererAt = now

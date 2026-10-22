@@ -214,3 +214,15 @@ final class DrawOrderTests: XCTestCase {
         XCTAssertEqual(IsoMath.depth(at: IsoMath.center(of: t)), IsoMath.zPosition(origin: t, size: 1), accuracy: 0.0001)
     }
 }
+
+@MainActor
+final class DebugWispTests: XCTestCase {
+    func testTheDebugTriggerSendsAWispRightAway() {
+        let time = TestTime()
+        let game = makeGame(time)
+        XCTAssertFalse(game.wispVisible)
+        game.debugWispNow()
+        XCTAssertTrue(game.wispVisible)
+        XCTAssertNotNil(game.catchWisp())
+    }
+}
