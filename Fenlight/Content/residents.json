@@ -8,7 +8,11 @@
     "arrival": "story",
     "unlockLevel": 1,
     "favoriteShop": "reed_candles",
-    "color": "#C98B5A"
+    "color": "#C98B5A",
+    "chatter": [
+      "Keep the lights burning.",
+      "I remember when the whole fen glowed."
+    ]
   },
   {
     "id": "old_bramble",
@@ -19,7 +23,11 @@
     "arrival": "story",
     "unlockLevel": 3,
     "favoriteShop": "ferry_dock",
-    "color": "#5F8F4E"
+    "color": "#5F8F4E",
+    "chatter": [
+      "Mind the deep channel.",
+      "Water's high today. Good for business."
+    ]
   },
   {
     "id": "sorrel",
@@ -30,7 +38,11 @@
     "arrival": "story",
     "unlockLevel": 6,
     "favoriteShop": "mothsilk",
-    "color": "#B9A4D8"
+    "color": "#B9A4D8",
+    "chatter": [
+      "Every lit window is a little miracle.",
+      "Is that thread straight? It's never straight."
+    ]
   },
   {
     "id": "ilsabet",
@@ -41,7 +53,11 @@
     "arrival": "story",
     "unlockLevel": 5,
     "favoriteShop": "lantern_works",
-    "color": "#E8C46A"
+    "color": "#E8C46A",
+    "chatter": [
+      "I'll find you, Thief.",
+      "That lantern's flickering. I'll see to it."
+    ]
   },
   {
     "id": "bodkin",
@@ -52,7 +68,11 @@
     "arrival": "story",
     "unlockLevel": 8,
     "favoriteShop": "bellwater_inn",
-    "color": "#7A6A5A"
+    "color": "#7A6A5A",
+    "chatter": [
+      "Fire's lit, kettle's on.",
+      "Nobody leaves my inn hungry."
+    ]
   },
   {
     "id": "pip",
@@ -63,7 +83,11 @@
     "arrival": "wanderer",
     "unlockLevel": 1,
     "favoriteShop": "mossbread",
-    "color": "#D9773F"
+    "color": "#D9773F",
+    "chatter": [
+      "Buttons! Gossip! Maps, slightly wrong!",
+      "Heard a rumour about the deep fen..."
+    ]
   },
   {
     "id": "marigold",
@@ -74,7 +98,11 @@
     "arrival": "wanderer",
     "unlockLevel": 1,
     "favoriteShop": "mossbread",
-    "color": "#E3B04B"
+    "color": "#E3B04B",
+    "chatter": [
+      "Who wants a honey cake?",
+      "Ovens don't heat themselves."
+    ]
   },
   {
     "id": "wick",
@@ -85,7 +113,11 @@
     "arrival": "wanderer",
     "unlockLevel": 1,
     "favoriteShop": "reed_candles",
-    "color": "#F5D06B"
+    "color": "#F5D06B",
+    "chatter": [
+      "I'm not small, I'm concentrated.",
+      "Say something nice. I'll glow."
+    ]
   },
   {
     "id": "ottoline",
@@ -96,7 +128,11 @@
     "arrival": "wanderer",
     "unlockLevel": 2,
     "favoriteShop": "ferry_dock",
-    "color": "#8A6A4A"
+    "color": "#8A6A4A",
+    "chatter": [
+      "Ha! Look at that rain!",
+      "Caught three eels before breakfast."
+    ]
   },
   {
     "id": "hazel",
@@ -107,7 +143,11 @@
     "arrival": "wanderer",
     "unlockLevel": 2,
     "favoriteShop": "apothecary",
-    "color": "#B49A7A"
+    "color": "#B49A7A",
+    "chatter": [
+      "That's not a weed, that's a remedy.",
+      "Murk-cough? I have just the thing."
+    ]
   },
   {
     "id": "dunstan",
@@ -118,7 +158,11 @@
     "arrival": "wanderer",
     "unlockLevel": 2,
     "favoriteShop": "toadstool_tea",
-    "color": "#6E9A5A"
+    "color": "#6E9A5A",
+    "chatter": [
+      "Tea's ready when the rain stops.",
+      "Another cup? Of course another cup."
+    ]
   },
   {
     "id": "bryony",
@@ -129,7 +173,11 @@
     "arrival": "wanderer",
     "unlockLevel": 4,
     "favoriteShop": "apothecary",
-    "color": "#9B5A7A"
+    "color": "#9B5A7A",
+    "chatter": [
+      "Labelled it. Labelled it again.",
+      "Don't touch the purple jar."
+    ]
   },
   {
     "id": "fennimore",
@@ -140,7 +188,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "toadstool_tea",
-    "color": "#9A8A6A"
+    "color": "#9A8A6A",
+    "chatter": [
+      "Volume twelve is going well.",
+      "Hoo. Fascinating. Hoo."
+    ]
   },
   {
     "id": "nettle_burr",
@@ -151,7 +203,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "lantern_works",
-    "color": "#7F9A3A"
+    "color": "#7F9A3A",
+    "chatter": [
+      "We fixed it!",
+      "We fixed it... differently."
+    ]
   },
   {
     "id": "cindral",
@@ -162,7 +218,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "ferry_dock",
-    "color": "#8FA8B8"
+    "color": "#8FA8B8",
+    "chatter": [
+      "All aboard. Mind your tails.",
+      "Never lost a passenger. Not one."
+    ]
   },
   {
     "id": "aurelio",
@@ -173,7 +233,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "mothsilk",
-    "color": "#C7B8E8"
+    "color": "#C7B8E8",
+    "chatter": [
+      "Moonlight makes the finest thread.",
+      "Have you heard what the frogs are saying?"
+    ]
   },
   {
     "id": "velvet",
@@ -184,7 +248,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "bellwater_inn",
-    "color": "#5A4A6A"
+    "color": "#5A4A6A",
+    "chatter": [
+      "I never forget a face.",
+      "Your usual, dear?"
+    ]
   },
   {
     "id": "mother_sedge",
@@ -195,7 +263,11 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "apothecary",
-    "color": "#4E6A5A"
+    "color": "#4E6A5A",
+    "chatter": [
+      "I was old when the fen was young.",
+      "The Thief wore a mask. I remember the face beneath."
+    ]
   },
   {
     "id": "ashlock",
@@ -206,6 +278,145 @@
     "arrival": "summon",
     "unlockLevel": 1,
     "favoriteShop": "lantern_works",
-    "color": "#E07A3A"
+    "color": "#E07A3A",
+    "chatter": [
+      "Good day to you, friend frog.",
+      "My flame cannot be stolen."
+    ]
+  },
+  {
+    "id": "tansy",
+    "name": "Old Mother Tansy",
+    "folk": "Frog-folk storyteller",
+    "blurb": "Tells the same story every evening. It's different every time.",
+    "rarity": "uncommon",
+    "arrival": "story",
+    "unlockLevel": 4,
+    "favoriteShop": "toadstool_tea",
+    "color": "#7A9A5A",
+    "chatter": [
+      "Did I ever tell you about the Thief?",
+      "Sit, sit. Story time."
+    ]
+  },
+  {
+    "id": "bartholomew",
+    "name": "Bartholomew Grub",
+    "folk": "Mole-folk peat-digger",
+    "blurb": "Can't see much. Can smell good soil from a mile off.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 2,
+    "favoriteShop": "herb_garden",
+    "color": "#5A4A44",
+    "chatter": [
+      "Lovely bit of peat, this.",
+      "Who moved the sun?"
+    ]
+  },
+  {
+    "id": "bracken",
+    "name": "Bracken",
+    "folk": "Stag-folk woodcutter",
+    "blurb": "Gentle as a fawn, strong as an oak. Apologises to every tree.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 3,
+    "favoriteShop": "herb_garden",
+    "color": "#8A6A44",
+    "chatter": [
+      "Sorry, tree.",
+      "Mind my antlers in the doorway."
+    ]
+  },
+  {
+    "id": "juniper",
+    "name": "Juniper Hollowell",
+    "folk": "Human lamp-oil trader",
+    "blurb": "Smells of lamp oil and adventure, mostly lamp oil.",
+    "rarity": "common",
+    "arrival": "wanderer",
+    "unlockLevel": 3,
+    "favoriteShop": "lantern_works",
+    "color": "#B07A4A",
+    "chatter": [
+      "Oil for your lamp?",
+      "Burns clean, burns bright."
+    ]
+  },
+  {
+    "id": "thistle_sloe",
+    "name": "Thistle & Sloe",
+    "folk": "Hedgehog-folk siblings",
+    "blurb": "Never seen apart. Never seen agreeing.",
+    "rarity": "uncommon",
+    "arrival": "wanderer",
+    "unlockLevel": 4,
+    "favoriteShop": "eel_smoker",
+    "color": "#9A7A5A",
+    "chatter": [
+      "She started it.",
+      "He started it."
+    ]
+  },
+  {
+    "id": "mirelle",
+    "name": "Mirelle",
+    "folk": "Newt-folk glassblower",
+    "blurb": "Breathes fire into glass. Not literally. Mostly.",
+    "rarity": "uncommon",
+    "arrival": "wanderer",
+    "unlockLevel": 5,
+    "favoriteShop": "glassblower",
+    "color": "#C8743A",
+    "chatter": [
+      "Hot glass, coming through!",
+      "Every bubble is a tiny world."
+    ]
+  },
+  {
+    "id": "corvin",
+    "name": "Corvin Ashby",
+    "folk": "Crow-folk bookseller",
+    "blurb": "Trades in books, secrets and shiny things.",
+    "rarity": "uncommon",
+    "arrival": "wanderer",
+    "unlockLevel": 6,
+    "favoriteShop": "bookbinder",
+    "color": "#3A3A4A",
+    "chatter": [
+      "Ooh. Shiny.",
+      "First editions only."
+    ]
+  },
+  {
+    "id": "ondine",
+    "name": "Ondine",
+    "folk": "Water sprite",
+    "blurb": "Lives in the channels and steers lost boats home.",
+    "rarity": "rare",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "ferry_dock",
+    "color": "#4E9AB0",
+    "chatter": [
+      "The water remembers.",
+      "Follow the ripples."
+    ]
+  },
+  {
+    "id": "elowen",
+    "name": "Elowen Starling",
+    "folk": "Elf star-reader",
+    "blurb": "Reads the future in the stars above the fen. The stars are being very cagey.",
+    "rarity": "legendary",
+    "arrival": "summon",
+    "unlockLevel": 1,
+    "favoriteShop": "bookbinder",
+    "color": "#8A7AC8",
+    "chatter": [
+      "The stars say... wait for it.",
+      "A great light returns to the fen."
+    ]
   }
 ]

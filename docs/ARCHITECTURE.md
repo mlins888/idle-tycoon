@@ -92,6 +92,15 @@ stack, up to `Economy.maxDecorationBonus` (+50%) per shop, so where you put thin
 have no aura. Placing, moving or putting away a decoration first pays out every shop at its old rate,
 so a new bonus never applies to time that already passed.
 
+### Residents on the map
+
+Residents walk around town, purely for show (none of it is saved). Each hangs around their workplace,
+or their home if they don't have a job: they pick a nearby free tile, walk there along a route that
+goes around buildings (`Walkways.path`), wait a few seconds, and repeat. Sometimes they visit another
+shop instead. Now and then one says a line from their `chatter` in a speech bubble. Tap someone to see
+who they are and give them a job. The **Registry** tab of the Townsfolk screen lists everyone in the
+game, with folk you haven't met shown as silhouettes and a hint about how to meet them.
+
 ### Quests
 
 Residents ask for things: collect glimmer from a shop, build something, reach a stage, cleanse murk,
@@ -151,10 +160,12 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `IsoMath.swift` | Tile ↔ screen conversions, where a building's picture is anchored, draw order, and outline shapes for footprints and chunks. |
-| `TownScene.swift` | The SpriteKit scene. Outlines a decoration's aura while placing it or when it's selected. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
+| `TownScene.swift` | The SpriteKit scene. Hosts the walking residents (`TownsfolkLayer`). Outlines a decoration's aura while placing it or when it's selected. Creates the ground tiles, redraws buildings and land when `layoutRevision` changes, refreshes glimmer bubbles a few times a second, calls `game.tick()` once a second, shows the placement preview, and handles pan, pinch and tap. |
 | `BuildingNode.swift` | One building on the map: its picture, the glimmer bubble above it (which bobs when full), coloured dots for its workers, and a glowing lantern when a keeper collects it. |
-| `MapInteraction.swift` | What the player is doing right now (browsing, placing, moving) and what's selected. Shared by the map and the HUD. |
-| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in buildings (shaped differently per kind and stage), decorations (by their `shape`), tiles and resident portraits. Also small colour helpers. |
+| `Walkways.swift` | Where residents can walk (cleansed land without buildings, plus paths), routes around buildings, nearby spots, and the nearest free tile. Plain functions, unit-tested. |
+| `TownsfolkLayer.swift` | Residents walking around the map: picks where each one goes next, moves them along their route, keeps their draw order right, shows speech bubbles, and finds who was tapped. `ResidentNode` is one walking resident. |
+| `MapInteraction.swift` | What the player is doing right now (browsing, placing, moving) and what's selected (a building, a murk chunk or a resident). Shared by the map and the HUD. |
+| `ArtCatalog.swift` | Looks up art by name and falls back to drawn placeholders. The `Placeholder` section draws the stand-in buildings (shaped differently per kind and stage), decorations (by their `shape`), tiles, resident portraits, and the little walking figures (ears for animal-folk, wings for fae, hats for witches). Also small colour helpers. |
 
 ### `Fenlight/UI`: buttons and panels
 
@@ -164,7 +175,8 @@ decides draw order so buildings lower on the screen draw in front.
 | `HUDView.swift` | The overlay. Top bar (glimmer, wisps, level, restoration %). The bottom area switches between Collect all + Townsfolk + Build, the placement Cancel/Confirm bar, the tapped building's panel (shop, house, shrine or guild), or the cleanse panel. |
 | `Panels.swift` | `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
 | `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
-| `ResidentsView.swift` | The Townsfolk screen (everyone in town, where they work, who's on the way), resident `Portrait`s, and the `ArrivalCard`. |
+| `ResidentPanel.swift` | `ResidentPanel` (shown when you tap someone on the map, with a job picker) and `RegistryGrid` (everyone in the game, with hints for folk you haven't met). |
+| `ResidentsView.swift` | The Townsfolk screen with In town (everyone here, where they work, who's on the way) and Registry tabs, resident `Portrait`s, and the `ArrivalCard`. |
 | `Haptics.swift` | Small vibrations on collect, build and arrivals. |
 | `Format.swift` | Short number and time text: 12,345 → "12.3K", 8,100 s → "2h 15m". |
 
@@ -179,6 +191,7 @@ decides draw order so buildings lower on the screen draw in front.
 | File | What it does |
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile ↔ screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
+| `WalkwayTests.swift` | Checks for walkable land, walking on paths, routes around buildings, unreachable spots, and that every resident has something to say. |
 | `DecorationTests.swift` | Checks for footprint distance, aura reach and stacking, the cap, paths, paying out before a change, moving, putting away and costs. |
 | `StageQuestTests.swift` | Checks for stages and renovation (requirements, paying out, closing and reopening, finishing while away, finish-now, house beds), quests (starting, progress, claiming, follow-ups, the three-quest limit), and that every id referenced in the shipped JSON exists. |
 | `ResidentTests.swift` | Checks for arrivals (story, wanderers, while away), summoning (odds, repeatability, duplicates), worker bonuses, auto-collect and the offline cap, wisps, and loading version 1 saves. |
@@ -255,7 +268,8 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 | Add a decoration or change its aura | `Fenlight/Content/buildings.json` (`kind: "decoration"`, `aura`, `shape`) |
 | Change how far decoration bonuses can stack | `maxDecorationBonus` in `Economy.swift` |
 | Add a new kind of requirement or quest objective | `Requirement` / `Objective` in `Content.swift`, then `Requirements.swift` / `Quests.swift` |
-| Add a resident | `Fenlight/Content/residents.json` |
+| Add a resident, or what they say | `Fenlight/Content/residents.json` (`chatter`) |
+| Change how residents wander | `TownsfolkLayer.swift` (walk speed, wait times, how often they visit other shops or talk) |
 | Change how fast things grow or cost | `Fenlight/Model/Economy.swift` |
 | Change the map size or starting land | `Fenlight/Model/World.swift` |
 | Change what a new game starts with | `GameState.newGame` in `Fenlight/Model/GameState.swift` |

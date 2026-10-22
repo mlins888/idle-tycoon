@@ -52,6 +52,14 @@ Asset name: `resident.<id>`, where `<id>` is the resident's `id` in `Fenlight/Co
 - Square, 256 × 256 (@2x). Shown cropped to a circle, so keep the face in the middle.
 - Until a portrait exists, the game shows the resident's initials on their `color`.
 
+## Walking residents
+
+Asset name: `walker.<id>` (for example `walker.wren`). The small figure that walks around the map.
+
+- 48 × 72 (@2x 96 × 144). Transparent background.
+- Feet near the bottom centre (the game anchors the image 8% up from the bottom).
+- Draw them facing right; the game flips the image when they walk left.
+
 ## UI
 
 | Asset name  | What it is                     | Notes                                  |

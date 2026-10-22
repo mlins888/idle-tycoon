@@ -16,6 +16,8 @@ final class MapInteraction {
     var ghostOrigin: Tile?
     var selectedBuildingId: Int?
     var selectedChunk: Chunk?
+    /// A resident tapped on the map.
+    var selectedResidentId: String?
 
     func startPlacing(_ defId: String) {
         clearSelection()
@@ -37,5 +39,6 @@ final class MapInteraction {
     func clearSelection() {
         selectedBuildingId = nil
         selectedChunk = nil
+        selectedResidentId = nil
     }
 }

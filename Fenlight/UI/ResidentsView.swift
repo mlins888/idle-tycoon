@@ -15,9 +15,15 @@ struct Portrait: View {
     }
 }
 
-/// Everyone in town, where they live and work, and who's coming next.
+/// Everyone in town, where they live and work, and who's coming next; plus the registry of everyone there is to find.
 struct ResidentsView: View {
     let game: Game
+    @State private var tab = Tab.inTown
+
+    enum Tab: String, CaseIterable {
+        case inTown = "In town"
+        case registry = "Registry"
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -26,21 +32,30 @@ struct ResidentsView: View {
                     HStack(alignment: .firstTextBaseline) {
                         Text("Townsfolk").font(Theme.title(24))
                         Spacer()
-                        Text("\(game.state.residents.count)/\(game.totalBeds) beds")
+                        Text(tab == .inTown ? "\(game.state.residents.count)/\(game.totalBeds) beds"
+                                            : "Found \(game.state.residents.count) of \(game.content.residents.count)")
                             .font(Theme.body(13, weight: .bold))
                             .foregroundStyle(Theme.textDim)
                     }
                     .padding(.top, 20)
 
-                    arrivals
-
-                    ForEach(game.residentDefs) { r in
-                        row(r)
+                    Picker("View", selection: $tab) {
+                        ForEach(Tab.allCases, id: \.self) { Text($0.rawValue) }
                     }
-                    if game.state.residents.isEmpty {
-                        Text("No one lives here yet. Build a house and they'll come.")
-                            .font(Theme.body(14))
-                            .foregroundStyle(Theme.textDim)
+                    .pickerStyle(.segmented)
+
+                    if tab == .registry {
+                        RegistryGrid(game: game)
+                    } else {
+                        arrivals
+                        ForEach(game.residentDefs) { r in
+                            row(r)
+                        }
+                        if game.state.residents.isEmpty {
+                            Text("No one lives here yet. Build a house and they'll come.")
+                                .font(Theme.body(14))
+                                .foregroundStyle(Theme.textDim)
+                        }
                     }
                 }
                 .padding(.horizontal, 16)

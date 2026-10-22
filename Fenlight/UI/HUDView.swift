@@ -59,6 +59,8 @@ struct HUDView: View {
                 case .guild: GuildPanel(game: game, ui: ui, building: b)
                 case .decoration: DecorationPanel(game: game, ui: ui, building: b)
                 }
+            } else if let rid = ui.selectedResidentId, let def = game.content.resident(rid), game.resident(rid) != nil {
+                ResidentPanel(game: game, ui: ui, def: def)
             } else if let chunk = ui.selectedChunk {
                 CleansePanel(game: game, ui: ui, chunk: chunk)
             } else {

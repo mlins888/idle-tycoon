@@ -14,6 +14,7 @@ final class TownScene: SKScene {
     private let overlayLayer = SKNode()
 
     private var tileNodes: [Tile: SKSpriteNode] = [:]
+    private lazy var townsfolk = TownsfolkLayer(parent: buildingLayer)
     private var buildingNodes: [Int: BuildingNode] = [:]
     private var lastRevision = -1
     private var lastRestoration = -1.0
@@ -119,6 +120,8 @@ final class TownScene: SKScene {
             lastBubbleRefresh = currentTime
             refreshBubbles()
         }
+        townsfolk.update(currentTime)
+        townsfolk.setSelected(ui.selectedResidentId)
         if currentTime - lastTick > 1 {
             lastTick = currentTime
             game.tick()
@@ -154,6 +157,7 @@ final class TownScene: SKScene {
             node.showWorkers(colors: game.workers(at: b.id).map(\.color), keeper: game.isAuto(b))
         }
         applyRestorationTint()
+        townsfolk.sync(game)
     }
 
     /// The fen starts grey and gloomy and gains colour as more of it is cleansed.
@@ -291,19 +295,27 @@ final class TownScene: SKScene {
                 ui.ghostOrigin = World.origin(centeredOn: tile, size: def.size)
             }
         case .browse:
-            if let id = buildingHit(at: point, tile: tile) {
+            // Collecting wins over everything; then people; then buildings; then murk.
+            let hitBuilding = buildingHit(at: point, tile: tile)
+            if let id = hitBuilding, let node = buildingNodes[id] {
                 let amount = game.collect(id)
-                if amount >= 1, let node = buildingNodes[id] {
+                if amount >= 1 {
                     ui.clearSelection()
                     floatText("+\(Format.compact(amount))", above: node)
                     refreshBubbles()
                     Haptics.collect()
-                } else {
-                    ui.selectedChunk = nil
-                    ui.selectedBuildingId = id
+                    return
                 }
+            }
+            if let residentId = townsfolk.resident(at: point) {
+                ui.clearSelection()
+                ui.selectedResidentId = residentId
+                Haptics.collect()
+            } else if let id = hitBuilding {
+                ui.clearSelection()
+                ui.selectedBuildingId = id
             } else if World.inBounds(tile), !game.isCleansed(tile) {
-                ui.selectedBuildingId = nil
+                ui.clearSelection()
                 ui.selectedChunk = World.chunk(of: tile)
             } else {
                 ui.clearSelection()

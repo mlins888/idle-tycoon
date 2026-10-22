@@ -25,6 +25,11 @@ final class ArtCatalog {
         }
     }
 
+    /// A resident walking around the map: `walker.<id>`, or a drawn figure in their colour.
+    func walker(_ def: ResidentDef) -> SKTexture {
+        texture("walker.\(def.id)") { Placeholder.walker(def) }
+    }
+
     /// A resident's portrait, for SwiftUI screens. Falls back to initials on their colour.
     func portrait(_ def: ResidentDef) -> UIImage {
         UIImage(named: "resident.\(def.id)") ?? Placeholder.portrait(def)
@@ -94,6 +99,65 @@ enum Placeholder {
             g.setStrokeColor(UIColor.black.withAlphaComponent(0.12).cgColor)
             g.setLineWidth(1)
             g.strokePath()
+        }
+    }
+
+    /// A small figure: body in the resident's colour, a head, ears for animal-folk, wings for fae.
+    /// Feet sit near the bottom centre of the image.
+    static func walker(_ def: ResidentDef) -> UIImage {
+        let size = CGSize(width: 48, height: 72)
+        let folk = def.folk.lowercased()
+        let color = UIColor(hex: def.color)
+        let ink = UIColor(hex: "#1D1A24")
+        return UIGraphicsImageRenderer(size: size).image { ctx in
+            let g = ctx.cgContext
+            g.setLineWidth(2)
+            g.setStrokeColor(ink.cgColor)
+            g.setLineJoin(.round)
+            func shape(_ path: CGPath, _ c: UIColor) {
+                g.addPath(path)
+                g.setFillColor(c.cgColor)
+                g.drawPath(using: .fillStroke)
+            }
+            // Shadow
+            g.setFillColor(UIColor.black.withAlphaComponent(0.25).cgColor)
+            g.fillEllipse(in: CGRect(x: 10, y: 62, width: 28, height: 9))
+            // Wings for fae, sprites and moths
+            if folk.contains("fae") || folk.contains("sprite") || folk.contains("moth") {
+                let wing = UIColor.white.withAlphaComponent(0.55)
+                shape(CGPath(ellipseIn: CGRect(x: 2, y: 26, width: 18, height: 26), transform: nil), wing)
+                shape(CGPath(ellipseIn: CGRect(x: 28, y: 26, width: 18, height: 26), transform: nil), wing)
+            }
+            // Body (a rounded robe)
+            shape(CGPath(roundedRect: CGRect(x: 13, y: 30, width: 22, height: 36), cornerWidth: 9, cornerHeight: 9, transform: nil), color)
+            // Head
+            let headColor = folk.contains("human") || folk.contains("elf") || folk.contains("witch") || folk.contains("knight")
+                ? UIColor(hex: "#F0D2B0") : color.adjusted(by: 0.15)
+            if folk.contains("-folk") || folk.contains("folk ") {
+                // Ears
+                shape(CGPath(ellipseIn: CGRect(x: 11, y: 6, width: 10, height: 14), transform: nil), headColor)
+                shape(CGPath(ellipseIn: CGRect(x: 27, y: 6, width: 10, height: 14), transform: nil), headColor)
+            }
+            if folk.contains("elf") {
+                let ear = CGMutablePath()
+                ear.addLines(between: [CGPoint(x: 12, y: 20), CGPoint(x: 4, y: 12), CGPoint(x: 14, y: 16)])
+                ear.closeSubpath()
+                ear.addLines(between: [CGPoint(x: 36, y: 20), CGPoint(x: 44, y: 12), CGPoint(x: 34, y: 16)])
+                ear.closeSubpath()
+                shape(ear, headColor)
+            }
+            shape(CGPath(ellipseIn: CGRect(x: 12, y: 10, width: 24, height: 24), transform: nil), headColor)
+            // Eyes
+            g.setFillColor(ink.cgColor)
+            g.fillEllipse(in: CGRect(x: 18, y: 19, width: 3.5, height: 3.5))
+            g.fillEllipse(in: CGRect(x: 26.5, y: 19, width: 3.5, height: 3.5))
+            // Witches get a hat
+            if folk.contains("witch") {
+                let hat = CGMutablePath()
+                hat.addLines(between: [CGPoint(x: 8, y: 14), CGPoint(x: 40, y: 14), CGPoint(x: 26, y: 0)])
+                hat.closeSubpath()
+                shape(hat, UIColor(hex: "#3A2F4A"))
+            }
         }
     }
 

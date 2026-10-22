@@ -201,6 +201,24 @@ struct ResidentDef: Codable, Identifiable, Hashable {
     let favoriteShop: String
     /// Placeholder portrait colour (hex) until real art exists.
     let color: String
+    /// Things they say in speech bubbles around town.
+    var chatter: [String] = []
+}
+
+extension ResidentDef {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        folk = try c.decode(String.self, forKey: .folk)
+        blurb = try c.decode(String.self, forKey: .blurb)
+        rarity = try c.decode(Rarity.self, forKey: .rarity)
+        arrival = try c.decode(ArrivalKind.self, forKey: .arrival)
+        unlockLevel = try c.decode(Int.self, forKey: .unlockLevel)
+        favoriteShop = try c.decode(String.self, forKey: .favoriteShop)
+        color = try c.decode(String.self, forKey: .color)
+        chatter = try c.decodeIfPresent([String].self, forKey: .chatter) ?? []
+    }
 }
 
 /// What a quest asks for. In JSON: `{"type": "collect", "shop": "mossbread", "amount": 200}`,
