@@ -54,9 +54,44 @@ struct EventProgress: Codable, Equatable {
     var reached: Int = 0
 }
 
+/// The words used for the player in scene text. Presets for he, she and they; any custom set works too.
+struct Pronouns: Codable, Equatable, Hashable {
+    var subject: String      // they
+    var object: String       // them
+    var possessive: String   // their
+    var possessivePronoun: String // theirs
+    var reflexive: String    // themself
+    /// "they are" rather than "she is".
+    var pluralVerbs: Bool
+
+    static let they = Pronouns(subject: "they", object: "them", possessive: "their", possessivePronoun: "theirs",
+                               reflexive: "themself", pluralVerbs: true)
+    static let she = Pronouns(subject: "she", object: "her", possessive: "her", possessivePronoun: "hers",
+                              reflexive: "herself", pluralVerbs: false)
+    static let he = Pronouns(subject: "he", object: "him", possessive: "his", possessivePronoun: "his",
+                             reflexive: "himself", pluralVerbs: false)
+}
+
+/// The player character (the Surfaced). Filled in by character creation; until then, these defaults.
+struct PlayerProfile: Codable, Equatable {
+    var name = "Surfaced"
+    var pronouns = Pronouns.they
+    /// Placeholder portrait colour (hex) until real art exists.
+    var color = "#7FE3D6"
+}
+
+extension PlayerProfile {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? "Surfaced"
+        pronouns = try c.decodeIfPresent(Pronouns.self, forKey: .pronouns) ?? .they
+        color = try c.decodeIfPresent(String.self, forKey: .color) ?? "#7FE3D6"
+    }
+}
+
 /// Everything that gets saved. Kept as plain data so it can be encoded and tested easily.
 struct GameState: Codable, Equatable {
-    static let currentVersion = 5
+    static let currentVersion = 6
 
     var version: Int = GameState.currentVersion
     var glimmer: Double
@@ -95,6 +130,20 @@ struct GameState: Codable, Equatable {
     var nextWispAt: Date?
     /// While a lost wisp is drifting over town, when it fades away.
     var wispVisibleUntil: Date?
+
+    // Added in version 6: the story.
+    var chapter: Int = 1
+    var flags: Set<String> = []
+    /// Named story values: `sealStrain`, `courtStanding`, `kindling`.
+    var storyValues: [String: Double] = [:]
+    var seenScenes: Set<String> = []
+    /// Scenes waiting to play, in order (saved so closing the app doesn't lose them).
+    var pendingScenes: [String] = []
+    /// Memory fragments found.
+    var fragments: Set<String> = []
+    var player = PlayerProfile()
+    /// Whether the game-start scenes have been queued for this save.
+    var storyStarted = false
 
     static func newGame(now: Date) -> GameState {
         GameState(
@@ -163,5 +212,13 @@ extension GameState {
         invitedResidents = try c.decodeIfPresent(Set<String>.self, forKey: .invitedResidents) ?? []
         nextWispAt = try c.decodeIfPresent(Date.self, forKey: .nextWispAt)
         wispVisibleUntil = try c.decodeIfPresent(Date.self, forKey: .wispVisibleUntil)
+        chapter = try c.decodeIfPresent(Int.self, forKey: .chapter) ?? 1
+        flags = try c.decodeIfPresent(Set<String>.self, forKey: .flags) ?? []
+        storyValues = try c.decodeIfPresent([String: Double].self, forKey: .storyValues) ?? [:]
+        seenScenes = try c.decodeIfPresent(Set<String>.self, forKey: .seenScenes) ?? []
+        pendingScenes = try c.decodeIfPresent([String].self, forKey: .pendingScenes) ?? []
+        fragments = try c.decodeIfPresent(Set<String>.self, forKey: .fragments) ?? []
+        player = try c.decodeIfPresent(PlayerProfile.self, forKey: .player) ?? PlayerProfile()
+        storyStarted = try c.decodeIfPresent(Bool.self, forKey: .storyStarted) ?? false
     }
 }

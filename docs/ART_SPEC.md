@@ -52,6 +52,18 @@ Asset name: `resident.<id>`, where `<id>` is the resident's `id` in `Fenlight/Co
 - Square, 256 × 256 (@2x). Shown cropped to a circle, so keep the face in the middle.
 - Until a portrait exists, the game shows the resident's initials on their `color`.
 
+## Story portraits
+
+Shown large in dialogue scenes. Square, 256 × 256 (@2x), transparent or painted background.
+
+| Asset name | Who |
+|------------|-----|
+| `resident.<id>` | A resident (the same portrait used everywhere) |
+| `character.<id>` | Someone who speaks in scenes but isn't a resident (ids in `characters.json`) |
+| `player` | The player character (the Surfaced) |
+
+Until art exists, each shows initials on the character's colour.
+
 ## Walking residents
 
 Asset name: `walker.<id>` (for example `walker.wren`). The small figure that walks around the map.

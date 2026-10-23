@@ -80,4 +80,32 @@ final class FenlightUITests: XCTestCase {
         }
         XCTAssertEqual(app.state, .runningForeground)
     }
+
+    func testPlayingAStorySceneAndMakingAChoice() {
+        let debug = app.buttons["Debug menu"]
+        XCTAssertTrue(debug.waitForExistence(timeout: 5))
+        debug.tap()
+
+        let play = app.buttons["Play debug_engine_test"]
+        XCTAssertTrue(play.waitForExistence(timeout: 3))
+        play.tap()
+
+        let line = app.buttons["sceneLine"]
+        XCTAssertTrue(line.waitForExistence(timeout: 5), "the scene player opened")
+        XCTAssertTrue(line.label.contains("test of the scene engine"))
+        line.tap()
+        XCTAssertTrue(line.label.contains("Surfaced"), "the player's default name was filled in")
+        line.tap()
+        line.tap()
+
+        let choice = app.buttons["Set the test flag"]
+        XCTAssertTrue(choice.waitForExistence(timeout: 3))
+        choice.tap()
+        XCTAssertFalse(app.buttons["sceneLine"].waitForExistence(timeout: 2), "the scene closed")
+
+        debug.tap()
+        let flag = app.switches["engine_test_choice"]
+        XCTAssertTrue(flag.waitForExistence(timeout: 3))
+        XCTAssertEqual(flag.value as? String, "1", "the choice set the flag")
+    }
 }

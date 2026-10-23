@@ -23,6 +23,9 @@ struct Aura: Codable, Hashable {
 /// In JSON: `{"type": "level", "level": 3}`, `{"type": "building", "building": "mossbread", "stage": 2}`,
 /// `{"type": "resident", "resident": "marigold"}`, `{"type": "quest", "quest": "ovens_warm"}`,
 /// `{"type": "restoration", "percent": 40}`.
+/// Story kinds: `{"type": "flag", "flag": "x"}`, `{"type": "notFlag", "flag": "x"}`,
+/// `{"type": "valueAtLeast", "value": "sealStrain", "amount": 3}`, `{"type": "valueAtMost", ...}`,
+/// `{"type": "chapter", "chapter": 2}` (at least that chapter), `{"type": "sceneSeen", "scene": "id"}`.
 enum Requirement: Hashable {
     case level(Int)
     case building(String, stage: Int)
@@ -30,14 +33,28 @@ enum Requirement: Hashable {
     case quest(String)
     /// Fraction of the fen cleansed, 0...1.
     case restoration(Double)
+    case flag(String)
+    case notFlag(String)
+    case valueAtLeast(String, Double)
+    case valueAtMost(String, Double)
+    case chapter(Int)
+    case sceneSeen(String)
 }
 
 extension Requirement: Codable {
-    private enum Keys: String, CodingKey { case type, level, building, stage, resident, quest, percent }
+    private enum Keys: String, CodingKey {
+        case type, level, building, stage, resident, quest, percent, flag, value, amount, chapter, scene
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         switch try c.decode(String.self, forKey: .type) {
+        case "flag": self = .flag(try c.decode(String.self, forKey: .flag))
+        case "notFlag": self = .notFlag(try c.decode(String.self, forKey: .flag))
+        case "valueAtLeast": self = .valueAtLeast(try c.decode(String.self, forKey: .value), try c.decode(Double.self, forKey: .amount))
+        case "valueAtMost": self = .valueAtMost(try c.decode(String.self, forKey: .value), try c.decode(Double.self, forKey: .amount))
+        case "chapter": self = .chapter(try c.decode(Int.self, forKey: .chapter))
+        case "sceneSeen": self = .sceneSeen(try c.decode(String.self, forKey: .scene))
         case "level": self = .level(try c.decode(Int.self, forKey: .level))
         case "building": self = .building(try c.decode(String.self, forKey: .building),
                                           stage: try c.decodeIfPresent(Int.self, forKey: .stage) ?? 1)
@@ -62,6 +79,18 @@ extension Requirement: Codable {
             try c.encode("quest", forKey: .type); try c.encode(id, forKey: .quest)
         case .restoration(let fraction):
             try c.encode("restoration", forKey: .type); try c.encode(fraction * 100, forKey: .percent)
+        case .flag(let f):
+            try c.encode("flag", forKey: .type); try c.encode(f, forKey: .flag)
+        case .notFlag(let f):
+            try c.encode("notFlag", forKey: .type); try c.encode(f, forKey: .flag)
+        case .valueAtLeast(let v, let n):
+            try c.encode("valueAtLeast", forKey: .type); try c.encode(v, forKey: .value); try c.encode(n, forKey: .amount)
+        case .valueAtMost(let v, let n):
+            try c.encode("valueAtMost", forKey: .type); try c.encode(v, forKey: .value); try c.encode(n, forKey: .amount)
+        case .chapter(let n):
+            try c.encode("chapter", forKey: .type); try c.encode(n, forKey: .chapter)
+        case .sceneSeen(let id):
+            try c.encode("sceneSeen", forKey: .type); try c.encode(id, forKey: .scene)
         }
     }
 }
@@ -396,20 +425,162 @@ struct EventDef: Codable, Identifiable, Hashable {
     let milestones: [Milestone]
 }
 
+// MARK: - Story
+
+/// When a scene plays. In JSON: `{"type": "gameStart"}`, `{"type": "chapterStart", "chapter": 2}`,
+/// `{"type": "questStarted", "quest": "id"}`, `{"type": "questCompleted", "quest": "id"}`,
+/// `{"type": "arrival", "resident": "id"}`, `{"type": "debug"}` (only from the debug menu).
+enum SceneTrigger: Hashable {
+    case gameStart
+    case chapterStart(Int)
+    case questStarted(String)
+    case questCompleted(String)
+    case arrival(String)
+    case debug
+}
+
+extension SceneTrigger: Codable {
+    private enum Keys: String, CodingKey { case type, chapter, quest, resident }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        switch try c.decode(String.self, forKey: .type) {
+        case "gameStart": self = .gameStart
+        case "chapterStart": self = .chapterStart(try c.decode(Int.self, forKey: .chapter))
+        case "questStarted": self = .questStarted(try c.decode(String.self, forKey: .quest))
+        case "questCompleted": self = .questCompleted(try c.decode(String.self, forKey: .quest))
+        case "arrival": self = .arrival(try c.decode(String.self, forKey: .resident))
+        case "debug": self = .debug
+        case let other:
+            throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown scene trigger \(other)")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        switch self {
+        case .gameStart: try c.encode("gameStart", forKey: .type)
+        case .chapterStart(let n): try c.encode("chapterStart", forKey: .type); try c.encode(n, forKey: .chapter)
+        case .questStarted(let q): try c.encode("questStarted", forKey: .type); try c.encode(q, forKey: .quest)
+        case .questCompleted(let q): try c.encode("questCompleted", forKey: .type); try c.encode(q, forKey: .quest)
+        case .arrival(let r): try c.encode("arrival", forKey: .type); try c.encode(r, forKey: .resident)
+        case .debug: try c.encode("debug", forKey: .type)
+        }
+    }
+}
+
+/// Something a scene or a choice changes. In JSON: `{"type": "setFlag", "flag": "x"}`,
+/// `{"type": "clearFlag", "flag": "x"}`, `{"type": "addValue", "value": "courtStanding", "amount": 1}`,
+/// `{"type": "startQuest", "quest": "id"}`, `{"type": "setChapter", "chapter": 2}`.
+enum Effect: Hashable {
+    case setFlag(String)
+    case clearFlag(String)
+    case addValue(String, Double)
+    case startQuest(String)
+    case setChapter(Int)
+}
+
+extension Effect: Codable {
+    private enum Keys: String, CodingKey { case type, flag, value, amount, quest, chapter }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        switch try c.decode(String.self, forKey: .type) {
+        case "setFlag": self = .setFlag(try c.decode(String.self, forKey: .flag))
+        case "clearFlag": self = .clearFlag(try c.decode(String.self, forKey: .flag))
+        case "addValue": self = .addValue(try c.decode(String.self, forKey: .value), try c.decode(Double.self, forKey: .amount))
+        case "startQuest": self = .startQuest(try c.decode(String.self, forKey: .quest))
+        case "setChapter": self = .setChapter(try c.decode(Int.self, forKey: .chapter))
+        case let other:
+            throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown effect \(other)")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        switch self {
+        case .setFlag(let f): try c.encode("setFlag", forKey: .type); try c.encode(f, forKey: .flag)
+        case .clearFlag(let f): try c.encode("clearFlag", forKey: .type); try c.encode(f, forKey: .flag)
+        case .addValue(let v, let n): try c.encode("addValue", forKey: .type); try c.encode(v, forKey: .value); try c.encode(n, forKey: .amount)
+        case .startQuest(let q): try c.encode("startQuest", forKey: .type); try c.encode(q, forKey: .quest)
+        case .setChapter(let n): try c.encode("setChapter", forKey: .type); try c.encode(n, forKey: .chapter)
+        }
+    }
+}
+
+/// One line of dialogue. `speaker` is a resident id, a character id from `characters.json`,
+/// `"player"` or `"narrator"`. Text can use `{name}` and pronoun tokens (see `Story.render`).
+struct SceneLine: Codable, Hashable {
+    let speaker: String
+    let text: String
+    var mood: String?
+}
+
+struct SceneChoice: Codable, Hashable {
+    let text: String
+    var effects: [Effect] = []
+}
+
+extension SceneChoice {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        text = try c.decode(String.self, forKey: .text)
+        effects = try c.decodeIfPresent([Effect].self, forKey: .effects) ?? []
+    }
+}
+
+/// A dialogue scene, as defined in `Content/scenes.json`. Plays once, when its trigger happens
+/// and its requirements are met.
+struct SceneDef: Codable, Identifiable, Hashable {
+    let id: String
+    let trigger: SceneTrigger
+    var requires: [Requirement] = []
+    let lines: [SceneLine]
+    /// Shown after the last line. Empty means the scene just ends.
+    var choices: [SceneChoice] = []
+    /// Applied when the scene ends (before any choice's own effects).
+    var effects: [Effect] = []
+}
+
+extension SceneDef {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        trigger = try c.decode(SceneTrigger.self, forKey: .trigger)
+        requires = try c.decodeIfPresent([Requirement].self, forKey: .requires) ?? []
+        lines = try c.decode([SceneLine].self, forKey: .lines)
+        choices = try c.decodeIfPresent([SceneChoice].self, forKey: .choices) ?? []
+        effects = try c.decodeIfPresent([Effect].self, forKey: .effects) ?? []
+    }
+}
+
+/// Someone who speaks in scenes but isn't a resident, from `Content/characters.json`.
+struct CharacterDef: Codable, Identifiable, Hashable {
+    let id: String
+    let name: String
+    /// Placeholder portrait colour (hex) until real art exists.
+    let color: String
+}
+
 struct GameContent {
     let buildings: [BuildingDef]
     let residents: [ResidentDef]
     let quests: [QuestDef]
     let events: [EventDef]
+    let scenes: [SceneDef]
+    let characters: [CharacterDef]
     private let buildingsById: [String: BuildingDef]
     private let residentsById: [String: ResidentDef]
     private let questsById: [String: QuestDef]
 
-    init(buildings: [BuildingDef], residents: [ResidentDef] = [], quests: [QuestDef] = [], events: [EventDef] = []) {
+    init(buildings: [BuildingDef], residents: [ResidentDef] = [], quests: [QuestDef] = [], events: [EventDef] = [],
+         scenes: [SceneDef] = [], characters: [CharacterDef] = []) {
         self.buildings = buildings
         self.residents = residents
         self.quests = quests
         self.events = events
+        self.scenes = scenes
+        self.characters = characters
         self.buildingsById = Dictionary(uniqueKeysWithValues: buildings.map { ($0.id, $0) })
         self.residentsById = Dictionary(uniqueKeysWithValues: residents.map { ($0.id, $0) })
         self.questsById = Dictionary(uniqueKeysWithValues: quests.map { ($0.id, $0) })
@@ -418,12 +589,16 @@ struct GameContent {
     func building(_ id: String) -> BuildingDef? { buildingsById[id] }
     func resident(_ id: String) -> ResidentDef? { residentsById[id] }
     func quest(_ id: String) -> QuestDef? { questsById[id] }
+    func scene(_ id: String) -> SceneDef? { scenes.first { $0.id == id } }
+    func character(_ id: String) -> CharacterDef? { characters.first { $0.id == id } }
 
     static func load(bundle: Bundle = .main) -> GameContent {
         GameContent(buildings: decode("buildings", bundle: bundle),
                     residents: decode("residents", bundle: bundle),
                     quests: decode("quests", bundle: bundle),
-                    events: decode("events", bundle: bundle))
+                    events: decode("events", bundle: bundle),
+                    scenes: decode("scenes", bundle: bundle),
+                    characters: decode("characters", bundle: bundle))
     }
 
     private static func decode<T: Decodable>(_ name: String, bundle: Bundle) -> [T] {

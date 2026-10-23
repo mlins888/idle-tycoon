@@ -1,0 +1,16 @@
+[
+  {
+    "id": "debug_engine_test",
+    "trigger": { "type": "debug" },
+    "lines": [
+      { "speaker": "narrator", "text": "This is a test of the scene engine. It contains no story." },
+      { "speaker": "player", "text": "Testing templating: my name is {name}. {They} {are} here, {they} walk{s} on, and this belongs to {them}." },
+      { "speaker": "wren", "text": "A resident line, for checking portraits and name plates.", "mood": "neutral" },
+      { "speaker": "narrator", "text": "Pick a choice to check that choices set flags." }
+    ],
+    "choices": [
+      { "text": "Set the test flag", "effects": [ { "type": "setFlag", "flag": "engine_test_choice" } ] },
+      { "text": "Leave it unset" }
+    ]
+  }
+]

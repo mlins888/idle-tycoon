@@ -753,47 +753,124 @@ struct WelcomeBackView: View {
 /// Testing shortcuts. Only included in debug builds.
 struct DebugMenu: View {
     let game: Game
+    var onClose: () -> Void = {}
     @State private var confirmReset = false
+    @State private var confirmStoryReset = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Debug").font(Theme.title(22))
-            HStack {
-                Button("+1K glimmer") { game.debugAdd(glimmer: 1_000) }
-                Button("+100K") { game.debugAdd(glimmer: 100_000) }
-                Button("+1 level") { game.debugAdd(xp: Economy.xpForLevel(game.level + 1) - game.state.xp) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Debug").font(Theme.title(22))
+                HStack {
+                    Button("+1K glimmer") { game.debugAdd(glimmer: 1_000) }
+                    Button("+100K") { game.debugAdd(glimmer: 100_000) }
+                    Button("+1 level") { game.debugAdd(xp: Economy.xpForLevel(game.level + 1) - game.state.xp) }
+                }
+                HStack {
+                    Button("+20 wisps") { game.debugAdd(wisps: 20) }
+                    Button("Wanderer now") { game.debugWandererNow() }
+                    Button("Wisp now") { game.debugWispNow() }
+                }
+                HStack {
+                    Button("Next festival") { game.debugJumpToNextEvent() }
+                    Button("+10 tokens") { game.debugAdd(eventTokens: 10) }
+                        .disabled(game.activeEvent == nil)
+                }
+                HStack {
+                    Button("Skip 10m") { game.debugSkip(600) }
+                    Button("Skip 1h") { game.debugSkip(3600) }
+                    Button("Skip 8h") { game.debugSkip(8 * 3600) }
+                }
+                Text("Time offset: \(Format.duration(game.clock.offset))")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textDim)
+                Button(confirmReset ? "Tap again to erase your town" : "Reset save") {
+                    if confirmReset {
+                        game.debugReset()
+                        confirmReset = false
+                    } else {
+                        confirmReset = true
+                    }
+                }
+                .foregroundStyle(Theme.ember)
+
+                storySection
             }
-            HStack {
-                Button("+20 wisps") { game.debugAdd(wisps: 20) }
-                Button("Wanderer now") { game.debugWandererNow() }
-                Button("Wisp now") { game.debugWispNow() }
-            }
-            HStack {
-                Button("Next festival") { game.debugJumpToNextEvent() }
-                Button("+10 tokens") { game.debugAdd(eventTokens: 10) }
-                    .disabled(game.activeEvent == nil)
-            }
-            HStack {
-                Button("Skip 10m") { game.debugSkip(600) }
-                Button("Skip 1h") { game.debugSkip(3600) }
-                Button("Skip 8h") { game.debugSkip(8 * 3600) }
-            }
-            Text("Time offset: \(Format.duration(game.clock.offset))")
-                .font(Theme.body(12))
+            .buttonStyle(FenButtonStyle())
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(Theme.text)
+    }
+
+    private var storySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("STORY")
+                .font(Theme.body(12, weight: .bold))
+                .tracking(1)
                 .foregroundStyle(Theme.textDim)
-            Button(confirmReset ? "Tap again to erase your town" : "Reset save") {
-                if confirmReset {
-                    game.debugReset()
-                    confirmReset = false
+                .padding(.top, 10)
+
+            HStack {
+                Text("Chapter \(game.state.chapter)").font(Theme.body(15, weight: .semibold))
+                Spacer()
+                Button("−") { game.debugSetChapter(game.state.chapter - 1) }
+                    .accessibilityLabel("Previous chapter")
+                Button("+") { game.debugSetChapter(game.state.chapter + 1) }
+                    .accessibilityLabel("Next chapter")
+            }
+
+            ForEach(["sealStrain", "courtStanding", "kindling"], id: \.self) { name in
+                HStack {
+                    Text("\(name): \(Int(game.state.storyValues[name] ?? 0))")
+                        .font(Theme.body(14))
+                        .monospacedDigit()
+                    Spacer()
+                    Button("−") { game.debugAdd(storyValue: name, -1) }
+                        .accessibilityLabel("Lower \(name)")
+                    Button("+") { game.debugAdd(storyValue: name, 1) }
+                        .accessibilityLabel("Raise \(name)")
+                }
+            }
+
+            Text("Flags").font(Theme.body(14, weight: .semibold))
+            if game.knownFlags.isEmpty {
+                Text("No flags in the story yet.").font(Theme.body(12)).foregroundStyle(Theme.textDim)
+            }
+            ForEach(game.knownFlags, id: \.self) { flag in
+                Toggle(flag, isOn: Binding(get: { game.state.flags.contains(flag) },
+                                           set: { _ in game.debugToggle(flag: flag) }))
+                    .font(Theme.body(13))
+                    .tint(Theme.lantern)
+            }
+
+            Text("Scenes").font(Theme.body(14, weight: .semibold))
+            ForEach(game.content.scenes) { scene in
+                HStack {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(scene.id).font(Theme.body(13, weight: .semibold))
+                        Text(game.state.seenScenes.contains(scene.id) ? "Seen" : "Not seen")
+                            .font(Theme.body(11))
+                            .foregroundStyle(Theme.textDim)
+                    }
+                    Spacer()
+                    Button("Play") {
+                        game.debugPlayScene(scene.id)
+                        onClose()
+                    }
+                    .accessibilityLabel("Play \(scene.id)")
+                }
+            }
+
+            Button(confirmStoryReset ? "Tap again to reset the story" : "Reset story (keeps the town)") {
+                if confirmStoryReset {
+                    game.debugResetStory()
+                    confirmStoryReset = false
                 } else {
-                    confirmReset = true
+                    confirmStoryReset = true
                 }
             }
             .foregroundStyle(Theme.ember)
         }
-        .buttonStyle(FenButtonStyle())
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .foregroundStyle(Theme.text)
     }
 }

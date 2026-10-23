@@ -281,7 +281,9 @@ final class QuestTests: XCTestCase {
                 XCTAssertLessThanOrEqual(stage, shipped.building(id)?.stages.count ?? 0, "\(owner): \(id) has no stage \(stage)")
             case .resident(let id): XCTAssertTrue(residentIds.contains(id), "\(owner): unknown resident \(id)")
             case .quest(let id): XCTAssertTrue(questIds.contains(id), "\(owner): unknown quest \(id)")
-            case .level, .restoration: break
+            case .sceneSeen(let id):
+                XCTAssertTrue(shipped.scene(id) != nil, "\(owner): unknown scene \(id)")
+            case .level, .restoration, .flag, .notFlag, .valueAtLeast, .valueAtMost, .chapter: break
             }
         }
         for b in shipped.buildings {

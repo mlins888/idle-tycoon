@@ -14,6 +14,18 @@ enum Requirements {
             return state.completedQuests.contains(id)
         case .restoration(let fraction):
             return Double(state.cleansedChunks.count) / Double(World.chunkCount) >= fraction - 0.0001
+        case .flag(let f):
+            return state.flags.contains(f)
+        case .notFlag(let f):
+            return !state.flags.contains(f)
+        case .valueAtLeast(let v, let n):
+            return (state.storyValues[v] ?? 0) >= n
+        case .valueAtMost(let v, let n):
+            return (state.storyValues[v] ?? 0) <= n
+        case .chapter(let n):
+            return state.chapter >= n
+        case .sceneSeen(let id):
+            return state.seenScenes.contains(id)
         }
     }
 
@@ -35,6 +47,13 @@ enum Requirements {
             return "Finish “\(content.quest(id)?.title ?? id)”"
         case .restoration(let fraction):
             return "\(Int((fraction * 100).rounded()))% of the fen restored"
+        // Story requirements are hidden from players; these descriptions are for debugging.
+        case .flag(let f): return "Flag \(f) set"
+        case .notFlag(let f): return "Flag \(f) not set"
+        case .valueAtLeast(let v, let n): return "\(v) at least \(n)"
+        case .valueAtMost(let v, let n): return "\(v) at most \(n)"
+        case .chapter(let n): return "Chapter \(n)"
+        case .sceneSeen(let id): return "Seen scene \(id)"
         }
     }
 }

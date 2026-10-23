@@ -32,7 +32,13 @@ final class ArtCatalog {
 
     /// A resident's portrait, for SwiftUI screens. Falls back to initials on their colour.
     func portrait(_ def: ResidentDef) -> UIImage {
-        UIImage(named: "resident.\(def.id)") ?? Placeholder.portrait(def)
+        portrait(id: "resident.\(def.id)", name: def.name, color: def.color)
+    }
+
+    /// Any portrait by asset name (`resident.<id>`, `character.<id>`, `player`), falling back to initials
+    /// on a coloured circle.
+    func portrait(id: String, name: String, color: String) -> UIImage {
+        UIImage(named: id) ?? Placeholder.portrait(key: id, name: name, color: color)
     }
 
     func grassTile() -> SKTexture {
@@ -49,13 +55,14 @@ enum Placeholder {
     private static var portraits: [String: UIImage] = [:]
 
     /// A coloured circle with the resident's initials.
-    static func portrait(_ def: ResidentDef) -> UIImage {
-        if let cached = portraits[def.id] { return cached }
+    static func portrait(key: String, name: String, color: String) -> UIImage {
+        let cacheKey = "\(key)|\(name)|\(color)"
+        if let cached = portraits[cacheKey] { return cached }
         let size = CGSize(width: 128, height: 128)
-        let initials = def.name.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined()
+        let initials = name.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined()
         let image = UIGraphicsImageRenderer(size: size).image { _ in
             let rect = CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2)
-            UIColor(hex: def.color).setFill()
+            UIColor(hex: color).setFill()
             UIBezierPath(ovalIn: rect).fill()
             UIColor(hex: "#FFF8E6").setStroke()
             let ring = UIBezierPath(ovalIn: rect.insetBy(dx: 3, dy: 3))
@@ -70,7 +77,7 @@ enum Placeholder {
             text.draw(at: CGPoint(x: (size.width - textSize.width) / 2, y: (size.height - textSize.height) / 2),
                       withAttributes: attrs)
         }
-        portraits[def.id] = image
+        portraits[cacheKey] = image
         return image
     }
 

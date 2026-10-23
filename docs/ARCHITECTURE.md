@@ -133,6 +133,28 @@ milestones give wisps and glimmer, unlock festival-only decorations (`eventOnly`
 once unlocked) and invite a festival resident (arrival `event`), who moves in when there's a bed.
 Progress starts over when the festival comes round the next year.
 
+### The story engine
+
+The story itself lives in [STORY.md](STORY.md) (the author's bible, never edited in code work) and
+open questions in [STORY_NOTES.md](STORY_NOTES.md). The engine that plays it:
+
+- **Scenes** (`scenes.json`): lines of dialogue `{speaker, text, mood}` with optional **choices**.
+  A speaker is a resident id, a character from `characters.json` (people who speak but aren't
+  residents), `"player"` or `"narrator"`.
+- **Triggers:** game start, a chapter starting, a quest starting or completing, a resident arriving,
+  or `debug` (only from the debug menu). A scene also has `requires` (the same `Requirement` system as
+  stages and quests, plus story kinds: flags, story values, chapter, scenes seen).
+- **Effects:** set or clear a flag, change a story value (`sealStrain`, `courtStanding`, `kindling`),
+  start a quest, set the chapter. A scene's own effects apply when it ends, then the chosen choice's.
+- **Play rules:** each scene plays once. Triggered scenes wait in `pendingScenes` (saved, so closing
+  the app doesn't lose them) and play one at a time, ahead of other popups, and only while you're
+  browsing the map (never mid-placement or under a sheet).
+- **Text templating:** `{name}` and pronoun tokens (`{they}`, `{them}`, `{their}`, `{theirs}`,
+  `{themself}`, verb helpers `{are}`, `{were}`, `{have}`, `{s}`, and capitalised `{They}`) are filled
+  in from the player's profile (`Story.render`).
+- **Debug menu â†’ Story:** play any scene, change the chapter and story values, toggle flags, reset the
+  story while keeping the town. Debug builds also accept the launch argument `-playScene <id>`.
+
 ### Quests
 
 Residents ask for things: collect glimmer from a shop, build something, reach a stage, cleanse murk,
@@ -178,6 +200,7 @@ small building sits next to a bigger one.) A test checks every arrangement of 1Ã
 | `Economy.swift` | Game-wide balance formulas: payouts, when a run is ready, how many runs a keeper collects, worker bonuses, the decoration bonus cap, the refund for putting a decoration away, capacity, build/cleanse/charter costs, the wisp cost to finish a renovation early, wisps, summon cost, wanderer timing, the offline cap, XP per level. (Per-building numbers live in `buildings.json`.) |
 | `Requirements.swift` | Checks a requirement (town level, a building at a stage, a resident, a finished quest, % restored) and describes it in plain words. Used by building stages and quests. |
 | `EventCalendar.swift` | Festival dates: which festival is running at a given moment, its start and end, and the next one to come. |
+| `Story.swift` | Story rules: which scenes an event triggers, applying effects, and filling in the player's name and pronouns. |
 | `Quests.swift` | Quest rules as plain functions: which quests can start, the counter value to remember when one starts, and how far along an objective is. |
 | `GameClock.swift` | The one source of "now". |
 | `Game.swift` | The heart of the game. Holds `GameState` and has a method for every action: `collect`, `collectAll` (both also earn festival tokens), `build`, `move`, `removeDecoration`, `startRenovation`, `finishRenovationNow`, `cleanse`, `assignWorker`, `summon`, `buyCharter`, `claimQuest`. Each checks the rules, changes the state and saves. `tick()` runs about once a second: renovations finish, keepers collect, festivals start and pay milestone rewards, residents arrive, quests start, level-ups pay wisps. Keeps the `announcements` queue (arrivals, finished renovations, finished quests), builds the "Welcome back" summary and has the debug helpers. |
@@ -188,6 +211,8 @@ small building sits next to a bigger one.) A test checks every arrangement of 1Ã
 |------|--------------|
 | `buildings.json` | Every building and its **stages**. Each stage has a name, description, what it sells, earning rate and how long it holds (shops) or beds (houses), plus the renovation cost, time and requirements to reach it. Fields that don't apply can be left out. |
 | `events.json` | The festivals: dates (`MM-DD`), token names, colour, and the milestone reward track. |
+| `scenes.json` | Dialogue scenes: trigger, requirements, lines, choices and effects. |
+| `characters.json` | People who speak in scenes but aren't residents (and the narrator). |
 | `quests.json` | Every quest: chapter, who gives it, title, text, the objective, the reward, and prerequisites. |
 | `residents.json` | Every resident: name, folk, description, rarity, how they arrive (`wanderer`, `story` or `summon`), unlock level, favourite shop, placeholder colour. |
 
@@ -212,6 +237,7 @@ small building sits next to a bigger one.) A test checks every arrangement of 1Ã
 | `Panels.swift` | `BuildMenu` (tabs: Shops, Homes, Decor, Special, with the reason anything is locked), `DecorationPanel` (what it boosts, move, put away), `BuildingPanel` (what it sells, worker slots, the Keeper's Charter, the next-stage card with its requirement checklist, and renovation progress), `HousePanel`, `ShrinePanel`, `GuildPanel`, `CleansePanel`, `BuildMenu`, `WelcomeBackView`, and `DebugMenu` (debug builds only). |
 | `EventView.swift` | The festival banner under the top bar and the festival reward track sheet. |
 | `WispInfoView.swift` | `ToastView` (the short "+3 wisps Â· â€¦" messages) and the sheet explaining wisps. |
+| `SceneView.swift` | The scene player: portraits left and right, the speaker's name and line, tap to go on, Skip, and choices. |
 | `QuestLog.swift` | The quest log sheet, reward rows, and `NoticeCard` (the popup for finished renovations and quests). |
 | `ResidentPanel.swift` | `ResidentPanel` (shown when you tap someone on the map, with a job picker) and `RegistryGrid` (everyone in the game, with hints for folk you haven't met). |
 | `ResidentsView.swift` | The Townsfolk screen with In town (everyone here, where they work, who's on the way) and Registry tabs, resident `Portrait`s, and the `ArrivalCard`. |
@@ -230,6 +256,7 @@ small building sits next to a bigger one.) A test checks every arrangement of 1Ã
 |------|--------------|
 | `FenlightTests.swift` | Automated checks for earnings, collecting, levels, placement rules, cleansing, tile â†” screen maths and saving. Uses a fake clock and its own small building list, so rebalancing `buildings.json` doesn't break them. |
 | `EventTests.swift` | Checks for festival dates (including wrapping past New Year), earning tokens, milestone rewards, festival residents, progress resetting each year, loading version 3 saves, and that the shipped festivals are consistent and don't overlap. |
+| `StoryEngineTests.swift` | Checks for scene triggers, play-once, saved queues, effects and choices, story requirements, templating with any pronouns, loading version 5 saves, and that shipped scenes only use real speakers, quests and tokens. |
 | `BalanceTests.swift` | Checks for the one-of-each rule, keepers collecting whole runs, lost wisps (schedule, catching, fading, surviving a restart), wisp toasts, and Registry sorting. |
 | `TestSupport.swift` | Shared test helpers: a shop definition builder, and the roomier 8Ã—8 layout many tests use. |
 | `FenlightUITests/FenlightUITests.swift` | Launches the real app from a fresh town and taps through the Build tabs, Townsfolk and Registry, quests, the wisp info and the festival banner, failing if anything crashes or hangs. |
@@ -307,6 +334,7 @@ Residents need a bed, so houses come first. `tick()` calls `processArrivals()`:
 |------------|-------|
 | Add or rebalance a building, or its stages | `Fenlight/Content/buildings.json` |
 | Add a quest | `Fenlight/Content/quests.json` |
+| Add a scene | `Fenlight/Content/scenes.json` (and a speaker to `characters.json` if they aren't a resident) |
 | Add or change a festival | `Fenlight/Content/events.json`, plus any `eventOnly` decorations in `buildings.json` and `event` residents in `residents.json` |
 | Add a decoration or change its aura | `Fenlight/Content/buildings.json` (`kind: "decoration"`, `aura`, `shape`) |
 | Change how far decoration bonuses can stack | `maxDecorationBonus` in `Economy.swift` |

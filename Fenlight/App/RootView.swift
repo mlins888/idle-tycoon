@@ -10,6 +10,13 @@ struct RootView: View {
 
     init() {
         let game = Game(content: .load(), store: RootView.makeStore())
+        #if DEBUG
+        // `-playScene <id>` opens a scene straight away (for screenshots and testing).
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-playScene"), args.indices.contains(i + 1) {
+            game.debugPlayScene(args[i + 1])
+        }
+        #endif
         let ui = MapInteraction()
         _game = State(initialValue: game)
         _ui = State(initialValue: ui)
@@ -34,6 +41,7 @@ struct RootView: View {
             cards
         }
         .animation(.spring(duration: 0.35), value: summonResult)
+        .animation(.easeInOut(duration: 0.3), value: game.currentScene?.id)
         .animation(.spring(duration: 0.35), value: game.announcements.first)
         .sensoryFeedback(.success, trigger: game.announcements.first) { _, new in new != nil }
         .sheet(item: $game.awaySummary) { summary in
@@ -70,7 +78,12 @@ struct RootView: View {
     /// Summon results and "moved in!" cards, one at a time, over a dimmed map.
     @ViewBuilder
     private var cards: some View {
-        if let result = summonResult {
+        if ui.mode == .browse, game.awaySummary == nil, let scene = game.currentScene {
+            // Story scenes come first, and wait while you're placing or moving something.
+            SceneView(game: game, scene: scene)
+                .id(scene.id)
+                .transition(.opacity)
+        } else if let result = summonResult {
             dimmed {
                 switch result {
                 case .newResident(let def):

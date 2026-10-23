@@ -76,6 +76,7 @@ final class Game {
         }
         self.state = loaded
         announcedReady = Set(activeQuests.filter(isReady).map(\.id))
+        startStoryIfNeeded()
         checkAway()
     }
 
@@ -578,6 +579,7 @@ final class Game {
         guard let q = content.quest(id), isReady(q) else { return false }
         state.activeQuests[id] = nil
         state.completedQuests.insert(id)
+        fire(.questCompleted(id))
         state.glimmer += q.reward.glimmer
         if q.reward.wisps > 0 { gainWisps(q.reward.wisps, "for “\(q.title)”") }
         state.xp += q.reward.xp
@@ -726,12 +728,14 @@ final class Game {
         state.residents.append(Resident(defId: def.id, homeId: house, workId: nil, arrivedAt: date))
         layoutRevision += 1
         if announce { announcements.append(.arrival(def)) }
+        fire(.arrival(def.id))
     }
 
     /// Starts available quests until the quest log is full.
     private func startQuests() {
         for q in Quests.available(state, content) where state.activeQuests.count < Quests.maxActive {
             state.activeQuests[q.id] = Quests.baseline(q.objective, state)
+            fire(.questStarted(q.id))
         }
     }
 
@@ -824,7 +828,110 @@ final class Game {
         }
     }
 
+    // MARK: - Story
+
+    /// The scene that should be showing now, if any.
+    var currentScene: SceneDef? {
+        state.pendingScenes.lazy.compactMap { self.content.scene($0) }.first
+    }
+
+    /// Queues the scenes an event triggers.
+    func fire(_ event: StoryEvent) {
+        for scene in Story.scenes(for: event, state, content) {
+            state.pendingScenes.append(scene.id)
+        }
+    }
+
+    /// Queues the game-start scenes the first time this save runs.
+    private func startStoryIfNeeded() {
+        guard !state.storyStarted else { return }
+        state.storyStarted = true
+        fire(.gameStart)
+        fire(.chapterStart(state.chapter))
+    }
+
+    /// Ends a scene: marks it seen, applies its effects and the chosen choice's effects.
+    func finishScene(_ id: String, choice: Int? = nil) {
+        guard let scene = content.scene(id) else {
+            state.pendingScenes.removeAll { $0 == id }
+            return
+        }
+        state.pendingScenes.removeAll { $0 == id }
+        state.seenScenes.insert(id)
+        var effects = scene.effects
+        if let choice, scene.choices.indices.contains(choice) {
+            effects += scene.choices[choice].effects
+        }
+        let result = Story.apply(effects, to: &state)
+        for quest in result.questsToStart { startQuest(quest) }
+        if result.chapterChanged { fire(.chapterStart(state.chapter)) }
+        save()
+    }
+
+    /// Starts a specific quest now (from a scene), whatever the three-quest limit says.
+    private func startQuest(_ id: String) {
+        guard let q = content.quest(id), state.activeQuests[id] == nil, !state.completedQuests.contains(id) else { return }
+        state.activeQuests[id] = Quests.baseline(q.objective, state)
+        fire(.questStarted(id))
+    }
+
     // MARK: - Debug
+
+    /// Plays any scene now, even one already seen.
+    func debugPlayScene(_ id: String) {
+        state.seenScenes.remove(id)
+        state.pendingScenes.removeAll { $0 == id }
+        state.pendingScenes.insert(id, at: 0)
+        save()
+    }
+
+    func debugSetChapter(_ n: Int) {
+        state.chapter = max(1, n)
+        save()
+    }
+
+    func debugAdd(storyValue name: String, _ amount: Double) {
+        state.storyValues[name, default: 0] += amount
+        save()
+    }
+
+    func debugToggle(flag: String) {
+        if state.flags.contains(flag) { state.flags.remove(flag) } else { state.flags.insert(flag) }
+        save()
+    }
+
+    /// Clears all story progress but keeps the town.
+    func debugResetStory() {
+        state.chapter = 1
+        state.flags = []
+        state.storyValues = [:]
+        state.seenScenes = []
+        state.pendingScenes = []
+        state.fragments = []
+        state.storyStarted = false
+        startStoryIfNeeded()
+        save()
+    }
+
+    /// Every flag mentioned anywhere in the content, plus any currently set (for the debug list).
+    var knownFlags: [String] {
+        var flags = state.flags
+        func collect(_ rs: [Requirement]) {
+            for r in rs {
+                if case .flag(let f) = r { flags.insert(f) }
+                if case .notFlag(let f) = r { flags.insert(f) }
+            }
+        }
+        for scene in content.scenes {
+            collect(scene.requires)
+            for e in scene.effects + scene.choices.flatMap(\.effects) {
+                if case .setFlag(let f) = e { flags.insert(f) }
+                if case .clearFlag(let f) = e { flags.insert(f) }
+            }
+        }
+        content.quests.forEach { collect($0.prerequisites) }
+        return flags.sorted()
+    }
 
     func debugAdd(glimmer: Double) {
         state.glimmer += glimmer
@@ -881,6 +988,7 @@ final class Game {
         announcements = []
         announcedReady = []
         layoutRevision += 1
+        startStoryIfNeeded()
         tick()
         save()
     }

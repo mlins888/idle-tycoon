@@ -63,7 +63,7 @@ struct HUDView: View {
             }
         }
         .sheet(isPresented: $showDebug) {
-            DebugMenu(game: game)
+            DebugMenu(game: game, onClose: { showDebug = false })
                 .presentationDetents([.medium])
                 .presentationBackground(Theme.panel)
         }
