@@ -5,6 +5,22 @@ Every sprite and UI piece is looked up by name. To replace a placeholder, add a 
 next time you build. Anything without art falls back to a drawn placeholder, so you can replace things
 one at a time.
 
+## Templates
+
+Guide templates for every size below are in `art/templates/2x/` (the sizes in this spec) and
+`art/templates/3x/`. Import one into Procreate or Figma as the bottom layer, lock it, draw above it,
+and hide it before exporting. Regenerate them with `python3 tools/make_art_templates.py`.
+
+- `building_1x1.png`, `building_2x2.png`, `building_3x3.png`: the footprint (blue), wall guides up
+  from its corners (pink), the anchor (red) and a resident for scale.
+- `tile.png`: one ground tile.
+- `walker.png`: a walking figure, with the feet line.
+- `portrait.png`: a portrait, with the circle crop.
+- `town_mockup_grid.png`: an 8 × 8 tile grid for painting a whole-town style mockup.
+
+Fenlight uses **2:1 isometric** (about 26.6°: two pixels across for one up). Procreate's built-in
+isometric drawing guide is 30°, which won't line up with the tiles, so use these templates instead.
+
 ## Ground tiles
 
 | Asset name   | What it is                     | Size (@2x) |
