@@ -65,12 +65,14 @@ footprint diamond.
 Asset name: `resident.<id>`, where `<id>` is the resident's `id` in `Fenlight/Content/residents.json`
 (for example `resident.wren`).
 
-- Square, 256 × 256 (@2x). Shown cropped to a circle, so keep the face in the middle.
+- Square, 512 × 512 (@2x) or 768 × 768 (@3x). Dialogue scenes show portraits at 150 pt, so smaller
+  art looks soft. Shown cropped to a circle in lists, so keep the face in the middle.
 - Until a portrait exists, the game shows the resident's initials on their `color`.
 
 ## Story portraits
 
-Shown large in dialogue scenes. Square, 256 × 256 (@2x), transparent or painted background.
+Shown large in dialogue scenes (150 pt). Square, 512 × 512 (@2x) or 768 × 768 (@3x), transparent or
+painted background.
 
 | Asset name | Who |
 |------------|-----|

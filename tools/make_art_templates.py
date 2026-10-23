@@ -148,7 +148,7 @@ def walker(s, out):
 
 
 def portrait(s, out):
-    w = int(256 * s)
+    w = int(512 * s)
     img = Image.new("RGBA", (w, w), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, w - 1, w - 1], outline=EDGE, width=max(1, int(s)))
@@ -156,7 +156,7 @@ def portrait(s, out):
     face = w * 0.32
     d.ellipse([w / 2 - face / 2, w * 0.24, w / 2 + face / 2, w * 0.24 + face * 1.2], outline=SUB, width=max(1, int(s)))
     label(d, ["Portrait", "Pink circle = crop in the", "townsfolk list; keep the", "face in the blue oval"],
-          s * 0.75, x=6 * s, y=w * 0.68)
+          s * 1.5, x=12 * s, y=w * 0.68)
     img.save(out / "portrait.png")
 
 
