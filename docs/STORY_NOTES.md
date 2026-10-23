@@ -6,15 +6,7 @@ nothing below is built until it's answered.
 
 ## Awaiting your decision
 
-These follow from decisions 4–7 below. They aren't needed until Fenlight is built (planned for slice
-M1f, Seal Strain and Wren's last light); they're listed now so they don't get decided by accident.
-
-8. **Who weaves wisps into Fenlight, and where?** For example: Mother Sedge (she wove the first
-   Fenlight), the Wisp Shrine, or Wren. Is anything else needed besides wisps (a memory, a fragment)?
-9. **How much Fenlight do the other sources give?** Heart scenes (memories freely given), recovered
-   lanterns and memory fragments. Do they give Fenlight directly, or wisps to be woven?
-10. **Do summoning and finishing renovations early still cost wisps,** now that wisps are also the raw
-    material for Fenlight? (That would make every wisp a choice between them.)
+(None right now.)
 
 ## Formatting only (not story questions)
 
@@ -51,9 +43,41 @@ fix them in your copy if you like:
 
 5. **Where Fenlight comes from:** memories freely given (residents' heart/backstory scenes), recovered
    lanterns (from Linnet's caches on expeditions), memory fragments, and lost wisps.
+   *Corrected by 11, 12 and 15: every source gives wisps; recovered lanterns raise capacity instead;
+   only common fragments can be spent.*
 
 6. **Lighting a town lantern:** **cleansing murk costs Fenlight** (as well as glimmer). That is how the
    town grows, and it raises Seal Strain the most.
 
 7. **Where light is banked:** in **Wren's lantern**. You bank Fenlight by giving it to Wren's last light;
    its glow on the map shows the stockpile.
+
+**2026-10-22 (later)**
+
+These correct decision 5 (two of its sources contradicted the bible) and answer questions 8–10.
+
+11. **Recovered lanterns give no Fenlight.** The bible says Linnet took only the flames and left the
+    caches as empty lanterns. Instead, recovered lanterns **raise how much Wren's lantern can hold**
+    (or how many town lanterns you can run).
+
+12. **Memory fragments are split in two.**
+    - The player's **personal fragments are never spent.** They drive the identity mystery, unlock the
+      Keeper, and buy Remembrances.
+    - **Common fragments** dropped by Murkbound can be woven or spent.
+
+13. **Seal Strain is capped below its maximum until Mother Sedge's warning in chapter 2,** so a player
+    who rushes expansion can't reach the Drowning before the game has warned them.
+
+14. **Mother Sedge weaves, at the Wisp Shrine.** She wove the first Fenlight, so running the town's light
+    economy makes her shame something the player handles every day. Her heart scenes and quest unlock
+    weaving upgrades. Roles stay separate: **Sedge weaves, Wren keeps.**
+
+15. **Every source gives wisps; the Shrine weaves them into Fenlight over time.** Wisps are memories in
+    raw form. The Shrine converts on its own (it suits an idle game). A heart scene can give a burst of
+    wisps as a reward, and **always counts toward Kindling permanently**, even after its wisps are spent,
+    so nobody feels they've spent a memory away.
+
+16. **Summoning keeps its wisp cost** (lighting a resident's way to town). **Finishing renovations early
+    switches to glimmer,** so rushing doesn't quietly drain the light economy. (To be changed in the
+    slice that builds Fenlight.)
+
