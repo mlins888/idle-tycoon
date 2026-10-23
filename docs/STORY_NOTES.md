@@ -6,19 +6,7 @@ nothing below is built until it's answered.
 
 ## Awaiting your decision
 
-1. **Who a heart is trust in.** STORY.md, M1 "Lore hook" says each heart is "a resident trusting
-   Wren with a memory". Since the player is now the Surfaced, should it read "trusting the player"?
-   (Affects how heart scenes are written and framed.)
-
-2. **What counts as "lighting a lantern" for Seal Strain.** STORY.md says Seal Strain "rises with
-   every lantern lit in town and every region Claimed". Which game actions should count as lighting a
-   lantern? A proposal to accept, change or reject: cleansing a patch of murk, building a shop, and
-   renovating a shop to a new stage. (Decorations? Houses? Festival lanterns?)
-
-3. **What "banking light for the Chapel" is in play.** STORY.md says Seal Strain "eases when light is
-   banked for the Chapel". A proposal to accept, change or reject: a Lantern Vault building where the
-   player spends glimmer and recovered lanterns to ease Seal Strain, instead of using them to grow the
-   town.
+(None right now.)
 
 ## Formatting only (not story questions)
 
@@ -32,4 +20,20 @@ fix them in your copy if you like:
 
 ## Decided
 
-(Answers move here with the date, so there's a record of every decision.)
+**2026-10-22**
+
+1. **Who a heart is trust in:** each heart is a resident trusting **the player** with a memory
+   (not Wren).
+
+2. **What raises Seal Strain:** cleansing murk raises it the most; building and renovating shops
+   raise it by a minimal amount.
+
+3. **Banking light:** *Fenlight* is a resource the player collects.
+   - **Spending** it on town lanterns grows the town and boosts production, but every lantern lit
+     draws on the same source that holds Linnet's seal, so Seal Strain goes up.
+   - **Banking** it puts Fenlight into a reserve for the Chapel instead (for example, Wren's
+     lantern). Banked light earns nothing for the town, but it eases the strain on the seal, and a
+     stockpile is needed to face Linnet in chapter 4.
+   - This is the core trade-off (grow the town now, or hold back light to keep the seal safe and
+     prepare for the ending), and it is what the chapter 3 choice "Keep relighting town, or bank
+     light for the Chapel" refers to.
